@@ -1,0 +1,23 @@
+# Ruflo local secrets and runtime data
+.env
+.env.local
+.env.*.local
+.claude-flow/data/
+.claude-flow/logs/
+.claude-flow/sessions/
+
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Credentials must never be committed from this working directory (the repo is PUBLIC).
+*pat*.txt
+*token*.txt
+*key*.txt
+*secret*
+config.ini
+
+# Build output - published to nmg-mobs-site by the workflow, never kept here
+out/

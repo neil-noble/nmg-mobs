@@ -1,0 +1,60 @@
+project: NMG Mobilisation Compliance
+phase: build            # build -> operating
+status: deploying
+created: 2026-10-24
+updated: 2026-10-24
+
+purpose: >
+  PeopleTray cannot block a flight/room booking (API is read-only for bookings, no pre-booking hook).
+  Instead: hourly, find everyone with a flight or room booking in the next 14 days who lacks any of the
+  five mobilisation items; publish a public dashboard (/nmgmobs) and email a daily report.
+
+repos:
+  source: https://github.com/neil-noble/nmg-mobs        # PUBLIC (free Actions minutes), branch master
+  site: https://github.com/neil-noble/nmg-mobs-site     # PUBLIC, Pages build_type=workflow, one orphan commit per build
+  pages_url: https://neil-noble.github.io/nmg-mobs-site/
+  wix_page: https://www.emergencyservicesaustralia.com.au/nmgmobs   # manual Wix editor step: embed pages_url in an iframe
+secrets: [PT_API_KEY, BREVO_USERNAME, BREVO_PASSWORD, MOBS_REPORT_TO, SITE_DEPLOY_KEY]
+public_repo_rules:
+  - logs print counts only, never names
+  - no report file is uploaded as an artifact (artifacts are public); only empty sent/alert markers
+  - recipients live in secret MOBS_REPORT_TO, not in code
+
+rules:   # Neil, 2026-10-24
+  items: [Medical, D&A Screen, Police Clearance, Driver's Licence, Induction]
+  sources:   # PeopleTray /api/v2/powerbi/personworkrolecompetencycompliance (paged, ~17 pages, ~1,665 rows)
+    Medical: compliance "Pre Employment Medical"; STW (work role "*Short Term Worker (STW)") may use "Medical Declaration" instead
+    D&A Screen: compliance "Drug and Alcohol Screen"
+    Police Clearance: compliance "National Police Clearance"
+    Driver's Licence: compliance "Drivers License - C (Car)"
+    Induction: competency "Crown Prince Project Site Induction"
+  states:
+    ok: compliance "Does not expire" | "Expiry on" | "Expiring on"; competency Competent + document uploaded
+    missing: compliance "No document added" (or any unknown status - never read unknown as cleared); competency "WR Requirement"
+    expired: compliance "Expired on"; competency Expired
+    no document: competency Competent but competencyDocumentUploaded=false
+    not on work role: the person's work roles carry no row for the item -> a gap (fix the work role)
+  multi_role: one row per work role per item; best state wins
+  no_work_role: people whose rows all have a blank workRole -> own section "cannot be checked" (Neil chose this over flagging)
+  window: today .. today+13 (14 days, AWST)
+  bookings:
+    flights: /api/v2/powerbi/flightbookings; no employeeId -> match workEmail, else unique first+last name, else "unmatched" section; skip cancel=true / bookingStatus Cancelled; Waitlisted counts
+    rooms: /api/v2/powerbi/roombookings (exact duplicates - dedupe); employeeId; a stay shows as first night + night count
+  dashboard_privacy: names + which item is missing, public (Neil chose explicitly 2026-10-24)
+  email: daily, first hourly build >= 06:00 AWST; to Neil only for now (secret MOBS_REPORT_TO)
+  refresh: hourly (cron '23 * * * *'); page meta-refresh 15 min
+
+architecture:
+  files: {config.py: tunables, peopletray.py: fetch+retry+paging, model.py: pure rules, render.py: page+email, run.py: CLI build|due|send|alert}
+  guard: artifact mobs-sent-<date> exists <=> that day's email sent; mobs-alerted-<date> caps failure alerts at 1/day
+  local_run: python run.py build --out out   # key from C:\claude\PeopleTray DAS\reference (not in this repo)
+
+verified:
+  - '2026-10-24 local: 20 tests pass'
+  - '2026-10-24 live build (window 24 Oct-6 Nov): 351 profiles; 257 booked; cleared 175, not cleared 39, no work role 43, unmatched 0; missing Medical 15, D&A 19, Police 14, Licence 15, Induction 12; ~2 min (compliance feed is slow)'
+  - '2026-10-24 page screenshot checked at 1280px and 390px (no horizontal scroll)'
+
+next:
+  - deploy repos + secrets + Pages; first workflow run
+  - Neil: add Wix page /nmgmobs with an iframe of pages_url (no API for this)
+  - raise with PeopleTray whether bookings can be hard-gated on compliance natively

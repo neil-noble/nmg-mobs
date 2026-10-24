@@ -1,0 +1,121 @@
+name: Mobilisation Compliance
+
+# Hourly: rebuild the public dashboard (nmg-mobs-site -> /nmgmobs on Wix).
+# Daily: the first build at or after 06:00 AWST also emails the report (MOBS_REPORT_TO).
+# GitHub delivers `schedule` events late or not at all, so the email is not tied to one slot:
+# every build asks "is today's email still owed?" and the sent marker answers it.
+#
+# Invariant: artifact mobs-sent-<YYYY-MM-DD> exists  <=>  that day's email went out.
+# This repo is PUBLIC: logs print counts only, and no report file is ever uploaded as an artifact.
+on:
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+    inputs:
+      send_email:
+        description: 'Send the email now, even if today''s has gone'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read      # the sent-marker lookup
+
+concurrency:
+  group: mobs
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BREVO_USERNAME: ${{ secrets.BREVO_USERNAME }}
+      BREVO_PASSWORD: ${{ secrets.BREVO_PASSWORD }}
+      MOBS_REPORT_TO: ${{ secrets.MOBS_REPORT_TO }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      # Actions are pinned to exact commits, so a moved tag cannot change what runs.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09   # v5
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1   # v6
+        with:
+          python-version: '3.12'
+
+      - name: Run tests
+        run: |
+          python -m pip install --quiet pytest
+          python -m pytest -q
+
+      - name: Build from PeopleTray
+        env:
+          PT_API_KEY: ${{ secrets.PT_API_KEY }}
+        run: python run.py build --out out
+
+      - name: Push to public site repo
+        # A write deploy key on nmg-mobs-site only. It reaches the shell as an
+        # environment variable, never as script text.
+        env:
+          SITE_DEPLOY_KEY: ${{ secrets.SITE_DEPLOY_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SITE_DEPLOY_KEY" > ~/.ssh/site_key
+          chmod 600 ~/.ssh/site_key
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/site_key -o IdentitiesOnly=yes"
+          git clone --quiet git@github.com:neil-noble/nmg-mobs-site.git /tmp/site
+          cp out/index.html /tmp/site/index.html
+          cd /tmp/site
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # One commit, replaced each time, so the site repo does not grow without end.
+          # Its own workflow publishes each push to Pages.
+          git checkout --quiet --orphan publish
+          git add -A
+          git commit --quiet -m "Dashboard $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push --quiet --force origin publish:main
+
+      - name: Is today's email owed?
+        id: due
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE: ${{ inputs.send_email }}
+        run: python run.py due $( [ "$FORCE" = "true" ] && echo --force )
+
+      - name: Send the email
+        if: steps.due.outputs.due == 'yes'
+        run: python run.py send --out out
+
+      - name: Record today as sent
+        if: steps.due.outputs.due == 'yes'
+        run: echo "sent by run ${{ github.run_id }}" > sent-marker.txt
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9   # v7
+        if: steps.due.outputs.due == 'yes'
+        with:
+          name: ${{ steps.due.outputs.marker }}
+          path: sent-marker.txt
+          retention-days: 30
+          overwrite: true
+
+      - name: Alert on failure
+        id: alert
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python run.py alert
+
+      - name: Record today's alert
+        if: failure() && steps.alert.outputs.alerted == 'yes'
+        run: echo "alerted by run ${{ github.run_id }}" > alert-marker.txt
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9   # v7
+        if: failure() && steps.alert.outputs.alerted == 'yes'
+        with:
+          name: ${{ steps.alert.outputs.marker }}
+          path: alert-marker.txt
+          retention-days: 30
+          overwrite: true
