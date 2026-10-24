@@ -42,7 +42,7 @@ rules:   # Neil, 2026-10-24
     rooms: /api/v2/powerbi/roombookings (exact duplicates - dedupe); employeeId; a stay shows as first night + night count
   dashboard_privacy: names + which item is missing, public (Neil chose explicitly 2026-10-24)
   email: daily, first hourly build >= 06:00 AWST; to Neil only for now (secret MOBS_REPORT_TO)
-  refresh: hourly (cron '23 * * * *'); page meta-refresh 15 min
+  refresh: hourly - primary cron-job.org job 8711243 at :05 Perth (see trigger:), backup GitHub cron '35 * * * *'; page meta-refresh 15 min
 
 architecture:
   files: {config.py: tunables, peopletray.py: fetch+retry+paging, model.py: pure rules, dashboard.py: page (data JSON + CSS + JS), render.py: email, run.py: CLI build|due|send|alert}
@@ -65,6 +65,15 @@ verified:
   - '2026-10-24 page screenshot checked at 1280px and 390px (no horizontal scroll)'
   - '2026-10-24 first Actions run 40047205848 (dispatch, send_email=true): all steps green, same counts as local; site Pages run 40047380781 deployed; live page serves 257/175/39/43; marker mobs-sent-2026-10-24 written; email arrived in Neil gmail (Updates tab); run log contains no names (grep 0)'
 
+trigger:
+  service: cron-job.org
+  job_id: 8711243
+  title: NMG Mobilisation Compliance hourly :05
+  fires: every hour at :05 Australia/Perth -> POST workflow_dispatch mobs.yml ref master (06:05 run sends the email)
+  built: 2026-10-24 via REST API, headers copied from OHS job 8705425; notify onFailure x3 + onDisable
+  pat: own fine-grained PAT 'nmg-mobs cron-job.org' supplied by Neil 2026-10-24 (pasted in chat), stored ONLY in the job's extendedData.headers. Never change its expiry (rotates the value)
+  status: BLOCKED 2026-10-24 - replay got 403 'Resource not accessible by personal access token' (needs actions=write on nmg-mobs). Neil to edit token permissions in place, then replay the stored request expecting HTTP 204
 next:
+  - Neil: give PAT 'nmg-mobs cron-job.org' Actions Read and write on nmg-mobs, then re-verify job 8711243
   - Neil: add Wix page /nmgmobs with an iframe of pages_url (no API for this)
   - raise with PeopleTray whether bookings can be hard-gated on compliance natively
