@@ -9,7 +9,9 @@ name: Mobilisation Compliance
 # This repo is PUBLIC: logs print counts only, and no report file is ever uploaded as an artifact.
 on:
   schedule:
-    - cron: '23 * * * *'
+    # Primary trigger: cron-job.org job 8711243 dispatches at :05 every hour. This is the backup;
+    # GitHub schedule events are best-effort and often late or dropped.
+    - cron: '35 * * * *'
   workflow_dispatch:
     inputs:
       send_email:
