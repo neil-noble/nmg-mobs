@@ -2,7 +2,7 @@ project: NMG Mobilisation Compliance
 phase: operating
 status: live_wix_page_pending
 created: 2026-10-24
-updated: 2026-10-24
+updated: 2026-10-25
 
 purpose: >
   PeopleTray cannot block a flight/room booking (API is read-only for bookings, no pre-booking hook).
@@ -65,11 +65,15 @@ architecture:
     validate_palette.js: green/red chosen for a lightness gap so CVD all-pairs dE 10.9 PASS (#2e7d32/#c62f3f was 3.7 FAIL);
     gaps adjacent dE 14.7 PASS. Light tints <3:1 on white - relief = legends, labels, tooltips, tables, faint inset outline.
     Table + email pills: No document also red #c62f3f (Neil 2026-10-24); the gap chart keeps Sand for it.
+    Not-cleared table (Neil 2026-10-25): sorted employer A-Z, then first booking, then name; top-right 'Download Excel'
+    button writes exactly the filtered table to .xlsx (ExcelJS 4.4.0 from cdnjs with SRI, lazy-loaded on click;
+    Missing/Expired/No document cells filled, header navy, frozen + autofilter). Email order unchanged.
     Font: Proxima Nova -> Montserrat (Google Fonts) -> Aptos.
   guard: artifact mobs-sent-<date> exists <=> that day's email sent; mobs-alerted-<date> caps failure alerts at 1/day
   local_run: python run.py build --out out   # key from C:\claude\PeopleTray DAS\reference (not in this repo)
 
 verified:
+  - '2026-10-25 local: 22 tests pass; Chromium 1366px: not-cleared table employer-sorted (28 rows), download gave a valid 29-row xlsx, no script errors; 390px no overflow'
   - '2026-10-24 local: 21 tests pass (after dashboard redesign)'
   - '2026-10-24 local: 22 tests pass; NMG palette + exclusions rendered at 1366/390px, no errors, no overflow'
   - '2026-10-24 redesign checked in Chromium at 1366px and 390px: no script errors, no horizontal overflow; employer click cross-filters all visuals; tooltip; search; filter kept after reload'

@@ -86,8 +86,11 @@ header p{margin:2px 0 0;font-size:12px;color:var(--river-tint)}
 grid-template-columns:repeat(12,minmax(0,1fr));gap:10px}
 .v{grid-column:span var(--span,12);background:var(--card);border:1px solid var(--line);border-radius:4px;
 padding:10px 12px 12px;box-shadow:0 1px 2px rgba(0,0,0,.05);min-width:0}
-.v>h2{margin:0 0 2px;font-size:13px;font-weight:700}
-.v>.sub{margin:0 0 10px;font-size:11.5px;color:var(--muted)}
+.v>h2,.vhead h2{margin:0 0 2px;font-size:13px;font-weight:700}
+.v>.sub,.vhead .sub{margin:0 0 10px;font-size:11.5px;color:var(--muted)}
+.vhead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px 12px;flex-wrap:wrap}
+.vhead .clear{margin-bottom:8px}
+.clear:disabled{opacity:.5;cursor:default}
 .note{color:var(--muted);font-size:11.5px;margin:8px 0 0}
 .empty{color:var(--muted);font-style:italic;margin:6px 0}
 /* slicers */
@@ -203,7 +206,9 @@ BODY = """
   <div id="items"></div></section>
 <section class="v" style="--span:7"><h2>When they arrive</h2><p class="sub">People by day of first booking &middot; today includes those already on site</p>
   <div id="days"></div></section>
-<section class="v top"><h2 id="h-n">Not cleared to mobilise</h2><p class="sub">Earliest booking first</p>
+<section class="v top"><div class="vhead"><div><h2 id="h-n">Not cleared to mobilise</h2>
+  <p class="sub">By employer A&ndash;Z, then earliest booking</p></div>
+  <button class="clear" id="x-n" type="button">Download Excel</button></div>
   <div id="tbl-n"></div>
   <p class="note"><b>Missing</b> = no document added (induction: not yet completed). <b>Expired</b> = the document or
   competency has expired. <b>No document</b> = marked competent but nothing uploaded. <b>Not on role</b> = the
@@ -567,9 +572,14 @@ JS = r"""
     box.appendChild(h("div", {"class": "scroll"}, [h("table", null, [h("thead", null, [h("tr", null, head)]), body])]));
   }
   function byDayThenName(a, b) { return a.d.localeCompare(b.d) || a.n.localeCompare(b.n); }
+  // Neil, 2026-10-25: the not-cleared table reads by employer A-Z first.
+  function byEmployer(a, b) { return a.e.localeCompare(b.e) || byDayThenName(a, b); }
+  var notCleared = [];   // what the not-cleared table shows now - the Excel download writes exactly this
   function tables(R) {
-    function of(s) { return R.filter(function (p) { return p.s === s; }).sort(byDayThenName); }
-    var n = of("n"), r = of("r"), u = of("u"), c = of("c");
+    function of(s, order) { return R.filter(function (p) { return p.s === s; }).sort(order || byDayThenName); }
+    var n = of("n", byEmployer), r = of("r"), u = of("u"), c = of("c");
+    notCleared = n;
+    document.getElementById("x-n").disabled = !n.length;
     document.getElementById("h-n").textContent = "Not cleared to mobilise (" + n.length + ")";
     document.getElementById("h-r").textContent = "No work role in PeopleTray (" + r.length + ")";
     document.getElementById("h-u").textContent = "Bookings not matched to a PeopleTray profile (" + u.length + ")";
@@ -580,6 +590,65 @@ JS = r"""
     table("tbl-u", u, false, "");
     table("tbl-c", c, true, "Nobody in this selection is cleared yet.");
   }
+
+  // ── Excel download of the not-cleared table (ExcelJS, fetched on first click) ──
+  var EXCELJS = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js";
+  var EXCELJS_SRI = "sha512-dlPw+ytv/6JyepmelABrgeYgHI0O+frEwgfnPdXDTOIZz+eDgfW07QXG02/O8COfivBdGNINy+Vex+lYmJ5rxw==";
+  var excelLoad = null;
+  function loadExcel() {
+    if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
+    if (!excelLoad) excelLoad = new Promise(function (ok, fail) {
+      var s = h("script", {src: EXCELJS, integrity: EXCELJS_SRI, crossorigin: "anonymous", referrerpolicy: "no-referrer"});
+      s.onload = function () { ok(window.ExcelJS); };
+      s.onerror = function () { excelLoad = null; fail(new Error("Could not load the Excel library")); };
+      document.head.appendChild(s);
+    });
+    return excelLoad;
+  }
+  function argb(hex) { return "FF" + hex.slice(1).toUpperCase(); }
+  function downloadExcel() {
+    var btn = document.getElementById("x-n"), list = notCleared.slice();
+    if (!list.length) return;
+    btn.disabled = true; btn.textContent = "Preparing…";
+    loadExcel().then(function (ExcelJS) {
+      var wb = new ExcelJS.Workbook();
+      var ws = wb.addWorksheet("Not cleared", {views: [{state: "frozen", ySplit: 1}]});
+      ws.columns = [{header: "Name", width: 28}, {header: "Employer", width: 34},
+        {header: "First booking", width: 16, style: {numFmt: "ddd d mmm yyyy"}}, {header: "Booking", width: 42}]
+        .concat(D.items.map(function (t) { return {header: t, width: 16}; }));
+      list.forEach(function (p) {
+        var d = p.d.split("-").map(Number);
+        var row = ws.addRow([p.n, p.e, new Date(Date.UTC(d[0], d[1] - 1, d[2])), p.b + (p.m ? " (+" + p.m + " more)" : "")]
+          .concat(p.st.map(function (code) { return code === "ok" ? "Held" : GAPBY[code].label; })));
+        p.st.forEach(function (code, i) {
+          var cell = row.getCell(5 + i);
+          cell.alignment = {horizontal: "center"};
+          if (code === "ok") { cell.font = {color: {argb: argb("#0f4d1e")}}; return; }
+          var color = TABLE_TONE[code] || GAPBY[code].color;
+          cell.font = {bold: true};
+          cell.fill = {type: "pattern", pattern: "solid", fgColor: {argb: argb(color)}};
+          if (color === "#c62f3f") cell.font = {bold: true, color: {argb: "FFFFFFFF"}};
+        });
+      });
+      var head = ws.getRow(1);
+      head.font = {bold: true, color: {argb: "FFFFFFFF"}};
+      head.fill = {type: "pattern", pattern: "solid", fgColor: {argb: argb("#083045")}};
+      head.alignment = {vertical: "middle"};
+      ws.autoFilter = {from: {row: 1, column: 1}, to: {row: 1, column: 4 + D.items.length}};
+      return wb.xlsx.writeBuffer();
+    }).then(function (buf) {
+      var url = URL.createObjectURL(new Blob([buf],
+        {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+      var a = h("a", {href: url, download: "NMG not cleared to mobilise " + D.days[0] + ".xlsx"});
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+    }).catch(function (e) {
+      alert("The Excel download failed: " + e.message);
+    }).then(function () {
+      btn.textContent = "Download Excel"; btn.disabled = !notCleared.length;
+    });
+  }
+  document.getElementById("x-n").addEventListener("click", downloadExcel);
 
   function render() {
     hideTip();
