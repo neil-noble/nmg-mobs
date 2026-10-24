@@ -36,6 +36,9 @@ rules:   # Neil, 2026-10-24
     not on work role: the person's work roles carry no row for the item -> a gap (fix the work role)
   multi_role: one row per work role per item; best state wins
   no_work_role: people whose rows all have a blank workRole -> own section "cannot be checked" (Neil chose this over flagging)
+  employer_exclusions: (Neil, 2026-10-24) not-cleared people from New Murchison Gold Ltd, and no-work-role people from
+    Meeka Metals / WestGold, are left out entirely (not shown, not counted; config.*_EXCLUDED_EMPLOYERS, case-insensitive).
+    Cleared NMG people still count. Build log prints 'excluded by employer N' (49 on 2026-10-24)
   window: today .. today+13 (14 days, AWST)
   bookings:
     flights: /api/v2/powerbi/flightbookings; no employeeId -> match workEmail, else unique first+last name, else "unmatched" section; skip cancel=true / bookingStatus Cancelled; Waitlisted counts
@@ -52,14 +55,19 @@ architecture:
     per item, columns by day of first booking, tables. Python decides every fact; the JS only counts/filters/draws;
     names go in as JSON with '<' escaped and are inserted with textContent.
   palettes: >
-    validated with the dataviz skill's validate_palette.js on #ffffff (all checks pass). Status: cleared #2f7fb8,
-    not cleared #d03b3b, no work role #b8860b (red/green was rejected: deutan dE 4.1). Gap type: missing #c62f3f,
-    expired #c47a12, no document #7d5bd0, not on role #00897b.
+    NMG style guide only (Neil, 2026-10-24; F:\NMG\NMG - ESA\02_NMG - CPO - Pre-Existing Site Specific Reference
+    Documents\Style Guide\A9799-New Murchison Gold Limited Stylesheet-1.pdf). Gold always = a problem.
+    Status: cleared Navy #083045, not cleared Gold #927128, no work role River tint #AAC2C5, not matched Black 50% #99999A.
+    Gap type: missing Gold #927128, expired Black 93% #333334, no document Sand #F1DCAA, not on role Navy tint #8498A2.
+    validate_palette.js: CVD + normal-vision separation PASS (status all-pairs dE 24.8, gaps adjacent 22.8); chroma floor
+    FAILS by nature of the muted brand and light tints are <3:1 on white - relief = legends, value labels, tooltips, tables,
+    and a faint inset outline on swatches/segments. Font: Proxima Nova -> Montserrat (Google Fonts) -> Aptos.
   guard: artifact mobs-sent-<date> exists <=> that day's email sent; mobs-alerted-<date> caps failure alerts at 1/day
   local_run: python run.py build --out out   # key from C:\claude\PeopleTray DAS\reference (not in this repo)
 
 verified:
   - '2026-10-24 local: 21 tests pass (after dashboard redesign)'
+  - '2026-10-24 local: 22 tests pass; NMG palette + exclusions rendered at 1366/390px, no errors, no overflow'
   - '2026-10-24 redesign checked in Chromium at 1366px and 390px: no script errors, no horizontal overflow; employer click cross-filters all visuals; tooltip; search; filter kept after reload'
   - '2026-10-24 live build (window 24 Oct-6 Nov): 351 profiles; 257 booked; cleared 175, not cleared 39, no work role 43, unmatched 0; missing Medical 15, D&A 19, Police 14, Licence 15, Induction 12; ~2 min (compliance feed is slow)'
   - '2026-10-24 page screenshot checked at 1280px and 390px (no horizontal scroll)'
