@@ -34,6 +34,12 @@ MEDICAL_DECLARATION = "Medical Declaration"
 #: Short Term Workers need a Medical Declaration instead of a Pre Employment Medical (Neil, 2026-10-24).
 STW_ROLE_PREFIX = "*Short Term Worker"
 
+# ── Employers left out of a section (Neil, 2026-10-24) ────────────────────────
+# Matched case-insensitively against the PeopleTray employer. People left out appear nowhere on
+# the dashboard or in the email, and are not counted.
+NOT_CLEARED_EXCLUDED_EMPLOYERS = ("New Murchison Gold Ltd",)
+NO_ROLE_EXCLUDED_EMPLOYERS = ("Meeka Metals", "WestGold")
+
 # ── Item states ───────────────────────────────────────────────────────────────
 OK = "ok"
 MISSING = "missing"              # "No document added" / competency "WR Requirement"

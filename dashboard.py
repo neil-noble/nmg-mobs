@@ -55,6 +55,10 @@ def page(report, generated: datetime):
         '<!doctype html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
         '<meta http-equiv="refresh" content="900"><meta name="robots" content="noindex">'
+        # Montserrat stands in for the style guide's Proxima Nova, which has no free web font.
+        '<link rel="preconnect" href="https://fonts.googleapis.com">'
+        '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
+        '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap">'
         f"<title>{escape(C.TITLE)}</title><style>{CSS}</style></head><body>"
         f'<header><div class="bar"><div><h1>{escape(C.TITLE)}</h1>'
         f"<p>Flight and room bookings {window} &middot; Medical, D&amp;A screen, police clearance, "
@@ -68,11 +72,12 @@ def page(report, generated: datetime):
 
 CSS = """
 :root{--navy:#083045;--river:#55848A;--pale-gold:#B19045;--river-tint:#AAC2C5;
---ink:#252423;--ink2:#52514e;--muted:#6b6a66;--line:#E1DFDD;--grid:#e9e8e3;--canvas:#F3F2F1;--card:#fff;
---c:#2f7fb8;--n:#d03b3b;--r:#b8860b;--u:#8f8d87}
+--ink:#333334;--ink2:#4f4f50;--muted:#6b6b6c;--line:#DBDBD3;--grid:#EDEDE9;--canvas:#EDEDE9;--card:#fff;
+/* NMG style guide: status = Navy cleared, Gold not cleared, River tint no work role, Black 50% not matched */
+--c:#083045;--n:#927128;--r:#AAC2C5;--u:#99999A}
 *{box-sizing:border-box}
 body{margin:0;background:var(--canvas);color:var(--ink);
-font-family:"Proxima Nova",Aptos,"Segoe UI",system-ui,sans-serif;font-size:13px;line-height:1.4}
+font-family:"Proxima Nova",Montserrat,Aptos,"Segoe UI",system-ui,sans-serif;font-size:13px;line-height:1.4}
 header{background:var(--navy);color:#fff;border-bottom:3px solid var(--pale-gold)}
 header .bar{max-width:1440px;margin:0 auto;padding:10px 16px}
 header h1{margin:0;font-size:20px;font-weight:700;line-height:1.15}
@@ -89,7 +94,7 @@ padding:10px 12px 12px;box-shadow:0 1px 2px rgba(0,0,0,.05);min-width:0}
 .slicers{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:end}
 .slicer{display:flex;flex-direction:column;gap:3px;min-width:200px;flex:0 1 280px}
 .slicer label{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
-.slicer select,.slicer input{font:inherit;padding:6px 8px;border:1px solid #c8c6c4;border-radius:3px;background:#fff;
+.slicer select,.slicer input{font:inherit;padding:6px 8px;border:1px solid #99999A;border-radius:3px;background:#fff;
 color:var(--ink);width:100%}
 .slicer select:focus,.slicer input:focus,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--navy);
 outline-offset:1px}
@@ -104,12 +109,12 @@ cursor:pointer;font-weight:600}
 .kpi .lab{font-size:12px;color:var(--ink2)}
 .kpi .val{font-size:30px;font-weight:700;line-height:1.1}
 .kpi .val small{font-size:13px;font-weight:600;color:var(--muted);margin-left:4px}
-.meter{height:6px;border-radius:3px;background:#e3edf5;overflow:hidden;margin-top:6px}
+.meter{height:6px;border-radius:3px;background:#EDEDE9;overflow:hidden;margin-top:6px}
 .meter i{display:block;height:100%;background:var(--c);border-radius:3px}
 /* legend */
 .legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11.5px;color:var(--ink2);margin:0 0 10px}
 .legend span{display:inline-flex;align-items:center;gap:5px}
-.sw{display:inline-block;width:10px;height:10px;border-radius:2px;flex:none}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
 /* donut */
 .donut{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .donut svg{width:180px;height:180px;flex:none}
@@ -132,6 +137,7 @@ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
 .track{display:flex;align-items:center;gap:6px;min-width:0}
 .sbar{display:flex;gap:2px;height:16px;flex:0 0 auto;cursor:pointer}
 .sbar.static{cursor:default}
+.sbar i,.stack i{box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}  /* keeps Sand and the tints visible on white */
 .sbar i{display:block;height:100%;min-width:2px}
 .sbar i:last-child{border-radius:0 4px 4px 0}
 .track .val{font-size:11.5px;color:var(--ink2);white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -139,7 +145,7 @@ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
 .dim{opacity:.32}
 /* columns */
 .cols{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);align-items:end;height:200px;
-border-bottom:1px solid #c3c2b7;gap:2px;padding-top:16px}
+border-bottom:1px solid #99999A;gap:2px;padding-top:16px}
 .col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
 .col .tot{font-size:11px;color:var(--ink2);font-variant-numeric:tabular-nums;margin-bottom:2px}
 .stack{display:flex;flex-direction:column-reverse;gap:2px;width:min(24px,80%)}
@@ -153,14 +159,14 @@ border-bottom:1px solid #c3c2b7;gap:2px;padding-top:16px}
 table{border-collapse:collapse;width:100%;font-size:12.5px}
 th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
 thead th{font-weight:700;border-bottom:2px solid var(--navy);white-space:nowrap}
-tbody tr:nth-child(even){background:#FAF9F8}
-tbody tr:hover{background:#eef3f7}
+tbody tr:nth-child(even){background:#F6F6F3}
+tbody tr:hover{background:#F8EED5}
 td.when{white-space:nowrap;font-variant-numeric:tabular-nums}
 td.st,th.st{text-align:center;white-space:nowrap}
 .more{color:var(--muted);font-size:11.5px}
 .pill{display:inline-flex;align-items:center;gap:5px;padding:1px 8px 1px 6px;border-radius:9px;font-size:11.5px;
 font-weight:600;color:var(--ink)}
-.pill i{width:8px;height:8px;border-radius:50%;flex:none}
+.pill i{width:8px;height:8px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
 .tick{color:var(--c);font-weight:700}
 details>summary{cursor:pointer;font-weight:700;font-size:13px}
 /* tooltip */
@@ -214,16 +220,16 @@ JS = r"""
   "use strict";
   var D = JSON.parse(document.getElementById("mobs-data").textContent);
   var STATUS = [
-    {k: "c", label: "Cleared", color: "#2f7fb8"},
-    {k: "n", label: "Not cleared", color: "#d03b3b"},
-    {k: "r", label: "No work role", color: "#b8860b"},
-    {k: "u", label: "Not matched", color: "#8f8d87"}
+    {k: "c", label: "Cleared", color: "#083045"},
+    {k: "n", label: "Not cleared", color: "#927128"},
+    {k: "r", label: "No work role", color: "#AAC2C5"},
+    {k: "u", label: "Not matched", color: "#99999A"}
   ];
   var GAP = [
-    {k: "missing", label: "Missing", color: "#c62f3f"},
-    {k: "expired", label: "Expired", color: "#c47a12"},
-    {k: "nodoc", label: "No document", color: "#7d5bd0"},
-    {k: "norole", label: "Not on role", color: "#00897b"}
+    {k: "missing", label: "Missing", color: "#927128"},
+    {k: "expired", label: "Expired", color: "#333334"},
+    {k: "nodoc", label: "No document", color: "#F1DCAA"},
+    {k: "norole", label: "Not on role", color: "#8498A2"}
   ];
   var GAPBY = {};
   GAP.forEach(function (g) { GAPBY[g.k] = g; });
@@ -359,7 +365,7 @@ JS = r"""
     var r = 40, C = 2 * Math.PI * r, gap = segs.length > 1 ? 1.2 : 0, at = 0;
     var svg = sv("svg", {viewBox: "0 0 100 100", role: "img",
       "aria-label": segs.map(function (s) { return s.label + " " + c[s.k]; }).join(", ")});
-    svg.appendChild(sv("circle", {cx: 50, cy: 50, r: r, fill: "none", stroke: "#efeeea", "stroke-width": 14}));
+    svg.appendChild(sv("circle", {cx: 50, cy: 50, r: r, fill: "none", stroke: "#EDEDE9", "stroke-width": 14}));
     segs.forEach(function (s) {
       var len = C * c[s.k] / R.length;
       var arc = sv("circle", {cx: 50, cy: 50, r: r, fill: "none", stroke: s.color, "stroke-width": 14,

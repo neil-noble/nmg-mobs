@@ -125,6 +125,7 @@ class Report:
     not_cleared: list
     no_role: list
     unmatched: list
+    excluded: list = field(default_factory=list)   # left out by employer; never shown or counted
 
     @property
     def booked_count(self):
@@ -208,13 +209,16 @@ def assess(people, flights, rooms, today: date, days=C.LOOKAHEAD_DAYS) -> Report
         bookings[eid].add(Booking(first_day, "Room", f"{(first_row.get('roomCamp') or '').strip()}, "
                                                     f"{len({d for d, _ in nights})} night(s)"))
 
-    cleared, not_cleared, no_role = [], [], []
+    not_cleared_out = {e.casefold() for e in C.NOT_CLEARED_EXCLUDED_EMPLOYERS}
+    no_role_out = {e.casefold() for e in C.NO_ROLE_EXCLUDED_EMPLOYERS}
+    cleared, not_cleared, no_role, excluded = [], [], [], []
     for eid, items in bookings.items():
         booked = Booked(people[eid], sorted(items, key=lambda b: (b.day, b.kind)))
+        employer = booked.person.employer.strip().casefold()
         if not booked.person.roles:
-            no_role.append(booked)
+            (excluded if employer in no_role_out else no_role).append(booked)
         elif booked.person.gaps():
-            not_cleared.append(booked)
+            (excluded if employer in not_cleared_out else not_cleared).append(booked)
         else:
             cleared.append(booked)
     for u in unmatched.values():
@@ -222,4 +226,4 @@ def assess(people, flights, rooms, today: date, days=C.LOOKAHEAD_DAYS) -> Report
     order = lambda b: (b.first.day, b.person.last.lower(), b.person.first.lower())
     return Report(today, end, sorted(cleared, key=order), sorted(not_cleared, key=order),
                   sorted(no_role, key=order),
-                  sorted(unmatched.values(), key=lambda u: (u.bookings[0].day, u.name)))
+                  sorted(unmatched.values(), key=lambda u: (u.bookings[0].day, u.name)), excluded)

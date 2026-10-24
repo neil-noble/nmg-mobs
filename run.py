@@ -44,7 +44,8 @@ def cmd_build(args):
     (out / "subject.txt").write_text(render.email_subject(report, today), encoding="utf-8")
     print(f"{len(people)} profiles; window {today} to {end}; booked {report.booked_count}: "
           f"cleared {len(report.cleared)}, not cleared {len(report.not_cleared)}, "
-          f"no work role {len(report.no_role)}, unmatched {len(report.unmatched)}")
+          f"no work role {len(report.no_role)}, unmatched {len(report.unmatched)}, "
+          f"excluded by employer {len(report.excluded)}")
     print("missing by item: " + ", ".join(f"{k} {v}" for k, v in report.gap_counts().items()))
 
 

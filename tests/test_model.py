@@ -129,3 +129,21 @@ def test_by_employer_counts():
     rows[2] = comp("1", "National Police Clearance", "No document added", employer="A")
     flights = [flight("Ann", "SMITH", "2026-10-26", "1@x.au"), flight("Bo", "JONES", "2026-10-26", "2@x.au")]
     assert assess(build_people(rows), flights, [], TODAY).by_employer() == [("A", 1, 1), ("B", 1, 0)]
+
+
+def test_excluded_employers_leave_only_their_section():
+    nmg = dict(employer="new murchison gold ltd")                      # case does not matter
+    rows = (full_set("1", **nmg)                                        # NMG, cleared: still shown
+            + full_set("2", first="Bo", last="GAP", email="2@x.au", **nmg)
+            + [comp("3", "Other", "Does not expire", role="", first="Cy", last="MEEKA", email="3@x.au",
+                    employer="Meeka Metals"),
+               comp("4", "Other", "Does not expire", role="", first="Di", last="NMGNOROLE", email="4@x.au", **nmg)])
+    rows[6] = comp("2", "National Police Clearance", "No document added", first="Bo", last="GAP",
+                   email="2@x.au", **nmg)
+    flights = [flight("Ann", "SMITH", "2026-10-26", "1@x.au"), flight("Bo", "GAP", "2026-10-26", "2@x.au")]
+    r = assess(build_people(rows), flights, [room("3", "2026-10-25"), room("4", "2026-10-25")], TODAY)
+    assert [b.person.last for b in r.cleared] == ["SMITH"]
+    assert r.not_cleared == []                                          # NMG not-cleared left out
+    assert [b.person.last for b in r.no_role] == ["NMGNOROLE"]          # Meeka left out, NMG kept
+    assert sorted(b.person.last for b in r.excluded) == ["GAP", "MEEKA"]
+    assert r.booked_count == 2

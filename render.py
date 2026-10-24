@@ -14,13 +14,13 @@ LABEL = {
 }
 
 # Inline colours for email clients, which ignore <style>: (text, background) per state,
-# the same hues as the dashboard's gap-type palette.
+# from the NMG style guide like the dashboard. The label carries the meaning; colour only groups.
 _MAIL_PILL = {
-    C.OK: ("#1f5f8b", "#E4EEF6"), C.MISSING: ("#a3222f", "#FAE3E5"), C.EXPIRED: ("#8a5408", "#F8EBD7"),
-    C.NO_DOCUMENT: ("#5a3ea8", "#ECE6F9"), C.NOT_ON_ROLE: ("#00695e", "#DDF1EE"),
+    C.OK: ("#083045", "#E6EAEC"), C.MISSING: ("#5c4615", "#E9DDBF"), C.EXPIRED: ("#ffffff", "#333334"),
+    C.NO_DOCUMENT: ("#5c4615", "#F8EED5"), C.NOT_ON_ROLE: ("#083045", "#DDE3E7"),
 }
 
-_TD = "padding:4px 8px;border-bottom:1px solid #E1DFDD;text-align:left;vertical-align:top"
+_TD = "padding:4px 8px;border-bottom:1px solid #DBDBD3;text-align:left;vertical-align:top"
 _TH = _TD + ";border-bottom:2px solid #083045;font-weight:700;white-space:nowrap"
 
 
@@ -42,9 +42,9 @@ def email_subject(report, today: date):
 def email_html(report):
     window = f"{fmt_day(report.today)} to {fmt_day(report.end)}"
     parts = [
-        '<div style="font-family:Calibri,Arial,sans-serif;font-size:14px;color:#252423">',
+        '<div style="font-family:Aptos,Calibri,Arial,sans-serif;font-size:14px;color:#333334">',
         f"<p>Bookings {window}: <b>{report.booked_count}</b> people booked, "
-        f"<b>{len(report.cleared)}</b> cleared, <b style=\"color:#B3261E\">{len(report.not_cleared)}</b> not cleared, "
+        f"<b>{len(report.cleared)}</b> cleared, <b style=\"color:#927128\">{len(report.not_cleared)}</b> not cleared, "
         f"<b>{len(report.no_role)}</b> with no work role in PeopleTray.</p>",
         f'<p>Live dashboard: <a href="{C.DASHBOARD_URL}">{C.DASHBOARD_URL}</a></p>',
     ]
@@ -71,7 +71,7 @@ def email_html(report):
                         f"{fmt_day(u.bookings[0].day)}</li>" for u in report.unmatched)
         parts.append(f"<h3 style=\"margin:16px 0 6px\">Bookings not matched to a PeopleTray profile "
                      f"({len(report.unmatched)})</h3><ul>{items}</ul>")
-    parts.append('<p style="color:#605E5C;font-size:12px">Medical = Pre Employment Medical, or a Medical Declaration '
+    parts.append('<p style="color:#6b6b6c;font-size:12px">Medical = Pre Employment Medical, or a Medical Declaration '
                  "for Short Term Workers. \"Not on role\" means the person's PeopleTray work role does not ask for "
                  "the item. This check reports bookings; it cannot stop them.</p></div>")
     return "".join(parts)
