@@ -167,7 +167,7 @@ td.st,th.st{text-align:center;white-space:nowrap}
 .pill{display:inline-flex;align-items:center;gap:5px;padding:1px 8px 1px 6px;border-radius:9px;font-size:11.5px;
 font-weight:600;color:var(--ink)}
 .pill i{width:8px;height:8px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
-.tick{color:var(--c);font-weight:700}
+.tick{color:#2e7d32;font-weight:700}
 details>summary{cursor:pointer;font-weight:700;font-size:13px}
 /* tooltip */
 .tip{position:fixed;z-index:10;display:none;pointer-events:none;background:#fff;border:1px solid var(--line);
@@ -502,11 +502,13 @@ JS = r"""
   function bookingCell(p) {
     return h("td", null, [p.b, p.m ? h("span", {"class": "more", text: " +" + p.m + " more"}) : null]);
   }
+  // Neil, 2026-10-24: in the tables Missing reads red, Expired orange and ticks green (charts keep the brand palette).
+  var TABLE_TONE = {missing: "#c62f3f", expired: "#e07b12"};
   function stateCell(code) {
     if (code === "ok") return h("td", {"class": "st"}, [h("span", {"class": "tick", text: "✓", "aria-label": "Held"})]);
-    var g = GAPBY[code];
+    var g = GAPBY[code], color = TABLE_TONE[code] || g.color;
     return h("td", {"class": "st"}, [h("span", {"class": "pill",
-      style: "background:color-mix(in srgb," + g.color + " 15%,#fff)"}, [h("i", {style: "background:" + g.color}), g.label])]);
+      style: "background:color-mix(in srgb," + color + " 15%,#fff)"}, [h("i", {style: "background:" + color}), g.label])]);
   }
   function table(boxId, list, withItems, empty) {
     var box = document.getElementById(boxId);

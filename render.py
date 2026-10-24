@@ -14,9 +14,9 @@ LABEL = {
 }
 
 # Inline colours for email clients, which ignore <style>: (text, background) per state,
-# from the NMG style guide like the dashboard. The label carries the meaning; colour only groups.
+# NMG style guide, except Missing red / Expired orange / ticks green (Neil, 2026-10-24). The label carries the meaning.
 _MAIL_PILL = {
-    C.OK: ("#083045", "#E6EAEC"), C.MISSING: ("#5c4615", "#E9DDBF"), C.EXPIRED: ("#ffffff", "#333334"),
+    C.OK: ("#2e7d32", "#E3F1E4"), C.MISSING: ("#a3222f", "#FAE3E5"), C.EXPIRED: ("#9a4f05", "#FBE9D6"),
     C.NO_DOCUMENT: ("#5c4615", "#F8EED5"), C.NOT_ON_ROLE: ("#083045", "#DDE3E7"),
 }
 

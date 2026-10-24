@@ -61,7 +61,9 @@ architecture:
     Gap type: missing Gold #927128, expired Black 93% #333334, no document Sand #F1DCAA, not on role Navy tint #8498A2.
     validate_palette.js: CVD + normal-vision separation PASS (status all-pairs dE 24.8, gaps adjacent 22.8); chroma floor
     FAILS by nature of the muted brand and light tints are <3:1 on white - relief = legends, value labels, tooltips, tables,
-    and a faint inset outline on swatches/segments. Font: Proxima Nova -> Montserrat (Google Fonts) -> Aptos.
+    and a faint inset outline on swatches/segments.
+    Exception (Neil, 2026-10-24): item cells in the tables + email use Missing red #c62f3f, Expired orange #e07b12,
+    ticks green #2e7d32 (dashboard TABLE_TONE, render._MAIL_PILL); the charts keep the brand palette. Font: Proxima Nova -> Montserrat (Google Fonts) -> Aptos.
   guard: artifact mobs-sent-<date> exists <=> that day's email sent; mobs-alerted-<date> caps failure alerts at 1/day
   local_run: python run.py build --out out   # key from C:\claude\PeopleTray DAS\reference (not in this repo)
 
