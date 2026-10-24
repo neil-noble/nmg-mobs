@@ -140,6 +140,8 @@ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
 .sbar i,.stack i{box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}  /* keeps Sand and the tints visible on white */
 .sbar i{display:block;height:100%;min-width:2px}
 .sbar i:last-child{border-radius:0 4px 4px 0}
+.rail{flex:0 0 calc(100% - 132px);height:16px;background:#EDEDE9;border-radius:0 4px 4px 0;display:flex;cursor:pointer}
+.rail i{display:block;height:100%;background:var(--n);border-radius:0 4px 4px 0}
 .track .val{font-size:11.5px;color:var(--ink2);white-space:nowrap;font-variant-numeric:tabular-nums}
 .track .val b{color:var(--ink)}
 .dim{opacity:.32}
@@ -207,6 +209,9 @@ BODY = """
   competency has expired. <b>No document</b> = marked competent but nothing uploaded. <b>Not on role</b> = the
   person's work role in PeopleTray does not ask for this item, so it has never been recorded; fix the work role.
   Medical = Pre Employment Medical, or a Medical Declaration for Short Term Workers.</p></section>
+<section class="v top"><h2>Not cleared by employer</h2><p class="sub">Bar = share of the employer's booked people who
+  are not cleared &middot; highest first &middot; click an employer to filter the page</p>
+  <div id="emppct"></div></section>
 <section class="v top"><h2 id="h-r">No work role in PeopleTray</h2><p class="sub">Cannot be checked until a work role is set</p>
   <div id="tbl-r"></div></section>
 <section class="v top" id="card-u" hidden><h2 id="h-u">Bookings not matched to a PeopleTray profile</h2>
@@ -448,6 +453,40 @@ JS = r"""
     box.appendChild(grid);
   }
 
+  // ── % of each employer's booked people not cleared ────────────────────────────
+  function employerShare(R) {
+    var box = document.getElementById("emppct");
+    box.replaceChildren();
+    var by = {};
+    R.forEach(function (p) {
+      var e = by[p.e] || (by[p.e] = {name: p.e, n: 0, t: 0});
+      e.t += 1; if (p.s === "n") e.n += 1;
+    });
+    var all = Object.keys(by).map(function (k) { return by[k]; });
+    var list = all.filter(function (e) { return e.n; }).sort(function (a, b) {
+      return b.n / b.t - a.n / a.t || b.n - a.n || a.name.localeCompare(b.name);
+    });
+    if (!list.length) { box.appendChild(h("p", {"class": "empty", text: "Nobody in this selection is not cleared."})); return; }
+    var grid = h("div", {"class": "hb"});
+    list.forEach(function (e) {
+      var dim = F.emp && e.name !== F.emp ? " dim" : "", share = 100 * e.n / e.t;
+      var rail = h("div", {"class": "rail", role: "img", "aria-label": e.name + ": " + e.n + " of " + e.t + " not cleared"},
+        [h("i", {style: "width:" + Math.max(share, 1) + "%"})]);
+      withTip(rail, e.name, [{v: e.n, l: "not cleared", color: STATUS[1].color},
+                             {v: e.t, l: "booked", color: "#EDEDE9"},
+                             {v: pct(e.n, e.t), l: "not cleared", color: STATUS[1].color}]);
+      rail.addEventListener("click", function () { setEmployer(e.name); });
+      grid.appendChild(h("button", {"class": "lab" + (F.emp === e.name ? " on" : "") + dim, type: "button", text: e.name,
+        title: e.name, "aria-pressed": String(F.emp === e.name), onclick: function () { setEmployer(e.name); }}));
+      grid.appendChild(h("div", {"class": "track" + dim}, [rail,
+        h("span", {"class": "val"}, [h("b", {text: pct(e.n, e.t)}), " · " + e.n + " of " + e.t])]));
+    });
+    box.appendChild(grid);
+    var clear = all.length - list.length;
+    if (clear) box.appendChild(h("p", {"class": "note", text: plural(clear, "other employer has", "other employers have") +
+      " nobody not cleared."}));
+  }
+
   function items(R) {
     var box = document.getElementById("items");
     box.replaceChildren();
@@ -505,9 +544,11 @@ JS = r"""
   function bookingCell(p) {
     return h("td", null, [p.b, p.m ? h("span", {"class": "more", text: " +" + p.m + " more"}) : null]);
   }
+  // Neil, 2026-10-24: in the tables No document reads red like Missing (the chart keeps Sand to tell them apart).
+  var TABLE_TONE = {nodoc: "#c62f3f"};
   function stateCell(code) {
     if (code === "ok") return h("td", {"class": "st"}, [h("span", {"class": "tick", text: "✓", "aria-label": "Held"})]);
-    var g = GAPBY[code], color = g.color;
+    var g = GAPBY[code], color = TABLE_TONE[code] || g.color;
     return h("td", {"class": "st"}, [h("span", {"class": "pill",
       style: "background:color-mix(in srgb," + color + " 15%,#fff)"}, [h("i", {style: "background:" + color}), g.label])]);
   }
@@ -549,7 +590,7 @@ JS = r"""
     var R = rows(false);
     chip.textContent = active ? "Showing " + plural(R.length, "person", "people") + " of " + D.people.length : "";
     saveFilters();
-    kpis(R); donut(R); employers(rows(true)); items(R); days(R); tables(R);
+    kpis(R); donut(R); employers(rows(true)); items(R); days(R); tables(R); employerShare(rows(true));
   }
   render();
 })();
