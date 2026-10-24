@@ -45,12 +45,22 @@ rules:   # Neil, 2026-10-24
   refresh: hourly (cron '23 * * * *'); page meta-refresh 15 min
 
 architecture:
-  files: {config.py: tunables, peopletray.py: fetch+retry+paging, model.py: pure rules, render.py: page+email, run.py: CLI build|due|send|alert}
+  files: {config.py: tunables, peopletray.py: fetch+retry+paging, model.py: pure rules, dashboard.py: page (data JSON + CSS + JS), render.py: email, run.py: CLI build|due|send|alert}
+  dashboard: >
+    Power BI style (Neil, 2026-10-24): slicers (employer, name search; kept across the 15-min reload via sessionStorage),
+    5 stat tiles, status donut, by-employer stacked bars (click = cross-filter page; top 12 + Other), gap-type stacked bars
+    per item, columns by day of first booking, tables. Python decides every fact; the JS only counts/filters/draws;
+    names go in as JSON with '<' escaped and are inserted with textContent.
+  palettes: >
+    validated with the dataviz skill's validate_palette.js on #ffffff (all checks pass). Status: cleared #2f7fb8,
+    not cleared #d03b3b, no work role #b8860b (red/green was rejected: deutan dE 4.1). Gap type: missing #c62f3f,
+    expired #c47a12, no document #7d5bd0, not on role #00897b.
   guard: artifact mobs-sent-<date> exists <=> that day's email sent; mobs-alerted-<date> caps failure alerts at 1/day
   local_run: python run.py build --out out   # key from C:\claude\PeopleTray DAS\reference (not in this repo)
 
 verified:
-  - '2026-10-24 local: 20 tests pass'
+  - '2026-10-24 local: 21 tests pass (after dashboard redesign)'
+  - '2026-10-24 redesign checked in Chromium at 1366px and 390px: no script errors, no horizontal overflow; employer click cross-filters all visuals; tooltip; search; filter kept after reload'
   - '2026-10-24 live build (window 24 Oct-6 Nov): 351 profiles; 257 booked; cleared 175, not cleared 39, no work role 43, unmatched 0; missing Medical 15, D&A 19, Police 14, Licence 15, Induction 12; ~2 min (compliance feed is slow)'
   - '2026-10-24 page screenshot checked at 1280px and 390px (no horizontal scroll)'
   - '2026-10-24 first Actions run 40047205848 (dispatch, send_email=true): all steps green, same counts as local; site Pages run 40047380781 deployed; live page serves 257/175/39/43; marker mobs-sent-2026-10-24 written; email arrived in Neil gmail (Updates tab); run log contains no names (grep 0)'

@@ -19,6 +19,7 @@ from email.utils import formataddr
 from pathlib import Path
 
 import config as C
+import dashboard
 import peopletray
 import render
 from model import assess, build_people
@@ -37,7 +38,7 @@ def cmd_build(args):
                     peopletray.fetch_room_bookings(today, end), today)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    (out / "index.html").write_text(render.dashboard(report, now), encoding="utf-8")
+    (out / "index.html").write_text(dashboard.page(report, now), encoding="utf-8")
     (out / "email.html").write_text(render.email_html(report), encoding="utf-8")
     (out / "email.txt").write_text(render.email_text(report), encoding="utf-8")
     (out / "subject.txt").write_text(render.email_subject(report, today), encoding="utf-8")
