@@ -72,8 +72,7 @@ trigger:
   fires: every hour at :05 Australia/Perth -> POST workflow_dispatch mobs.yml ref master (06:05 run sends the email)
   built: 2026-10-24 via REST API, headers copied from OHS job 8705425; notify onFailure x3 + onDisable
   pat: own fine-grained PAT 'nmg-mobs cron-job.org' supplied by Neil 2026-10-24 (pasted in chat), stored ONLY in the job's extendedData.headers. Never change its expiry (rotates the value)
-  status: BLOCKED 2026-10-24 - replay got 403 'Resource not accessible by personal access token' (needs actions=write on nmg-mobs). Neil to edit token permissions in place, then replay the stored request expecting HTTP 204
+  status: WORKING - verified 2026-10-24: first replay 403 (token lacked actions=write); Neil edited the token in place (value unchanged); stored request replayed -> HTTP 204 -> run 40062276815 success, email correctly skipped (already sent)
 next:
-  - Neil: give PAT 'nmg-mobs cron-job.org' Actions Read and write on nmg-mobs, then re-verify job 8711243
   - Neil: add Wix page /nmgmobs with an iframe of pages_url (no API for this)
   - raise with PeopleTray whether bookings can be hard-gated on compliance natively
