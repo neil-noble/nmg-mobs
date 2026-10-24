@@ -73,8 +73,8 @@ def page(report, generated: datetime):
 CSS = """
 :root{--navy:#083045;--river:#55848A;--pale-gold:#B19045;--river-tint:#AAC2C5;
 --ink:#333334;--ink2:#4f4f50;--muted:#6b6b6c;--line:#DBDBD3;--grid:#EDEDE9;--canvas:#EDEDE9;--card:#fff;
-/* NMG style guide: status = Navy cleared, Gold not cleared, River tint no work role, Black 50% not matched */
---c:#083045;--n:#927128;--r:#AAC2C5;--u:#99999A}
+/* status: green cleared, red not cleared (Neil, 2026-10-24); River tint no work role, Black 50% not matched */
+--c:#1e6b2e;--n:#e5625c;--r:#AAC2C5;--u:#99999A}
 *{box-sizing:border-box}
 body{margin:0;background:var(--canvas);color:var(--ink);
 font-family:"Proxima Nova",Montserrat,Aptos,"Segoe UI",system-ui,sans-serif;font-size:13px;line-height:1.4}
@@ -167,7 +167,7 @@ td.st,th.st{text-align:center;white-space:nowrap}
 .pill{display:inline-flex;align-items:center;gap:5px;padding:1px 8px 1px 6px;border-radius:9px;font-size:11.5px;
 font-weight:600;color:var(--ink)}
 .pill i{width:8px;height:8px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
-.tick{color:#2e7d32;font-weight:700}
+.tick{color:#1e6b2e;font-weight:700}
 details>summary{cursor:pointer;font-weight:700;font-size:13px}
 /* tooltip */
 .tip{position:fixed;z-index:10;display:none;pointer-events:none;background:#fff;border:1px solid var(--line);
@@ -220,14 +220,14 @@ JS = r"""
   "use strict";
   var D = JSON.parse(document.getElementById("mobs-data").textContent);
   var STATUS = [
-    {k: "c", label: "Cleared", color: "#083045"},
-    {k: "n", label: "Not cleared", color: "#927128"},
+    {k: "c", label: "Cleared", color: "#1e6b2e"},
+    {k: "n", label: "Not cleared", color: "#e5625c"},
     {k: "r", label: "No work role", color: "#AAC2C5"},
     {k: "u", label: "Not matched", color: "#99999A"}
   ];
   var GAP = [
-    {k: "missing", label: "Missing", color: "#927128"},
-    {k: "expired", label: "Expired", color: "#333334"},
+    {k: "missing", label: "Missing", color: "#c62f3f"},
+    {k: "expired", label: "Expired", color: "#e07b12"},
     {k: "nodoc", label: "No document", color: "#F1DCAA"},
     {k: "norole", label: "Not on role", color: "#8498A2"}
   ];
@@ -342,13 +342,16 @@ JS = r"""
     var c = countBy(R, "s"), ok = c.c || 0, bad = c.n || 0, nr = c.r || 0, checked = ok + bad;
     var box = document.getElementById("kpis");
     box.replaceChildren();
-    function tile(label, value, color, extra) {
-      box.appendChild(h("div", {"class": "v kpi", style: "border-top-color:" + color},
+    function tile(label, value, color, extra, tone) {
+      // tone: the tile itself reads green / red - tinted card, coloured figure (Neil, 2026-10-24)
+      var style = "border-top-color:" + color + (tone ? ";background:color-mix(in srgb," + color + " 10%,#fff)" : "");
+      if (tone) value.style.color = tone;
+      box.appendChild(h("div", {"class": "v kpi", style: style},
         [h("span", {"class": "lab", text: label}), value, extra || null]));
     }
     tile("People booked", h("span", {"class": "val", text: String(R.length)}), "#083045");
-    tile("Cleared to mobilise", h("span", {"class": "val", text: String(ok)}), STATUS[0].color);
-    tile("Not cleared", h("span", {"class": "val", text: String(bad)}), STATUS[1].color);
+    tile("Cleared to mobilise", h("span", {"class": "val", text: String(ok)}), STATUS[0].color, null, "#1e6b2e");
+    tile("Not cleared", h("span", {"class": "val", text: String(bad)}), STATUS[1].color, null, "#b3261e");
     tile("No work role in PeopleTray", h("span", {"class": "val", text: String(nr)}), STATUS[2].color);
     var meter = h("div", {"class": "meter", role: "img", "aria-label": "Readiness " + pct(ok, checked)},
       [h("i", {style: "width:" + (checked ? 100 * ok / checked : 0) + "%"})]);
@@ -502,11 +505,9 @@ JS = r"""
   function bookingCell(p) {
     return h("td", null, [p.b, p.m ? h("span", {"class": "more", text: " +" + p.m + " more"}) : null]);
   }
-  // Neil, 2026-10-24: in the tables Missing reads red, Expired orange and ticks green (charts keep the brand palette).
-  var TABLE_TONE = {missing: "#c62f3f", expired: "#e07b12"};
   function stateCell(code) {
     if (code === "ok") return h("td", {"class": "st"}, [h("span", {"class": "tick", text: "✓", "aria-label": "Held"})]);
-    var g = GAPBY[code], color = TABLE_TONE[code] || g.color;
+    var g = GAPBY[code], color = g.color;
     return h("td", {"class": "st"}, [h("span", {"class": "pill",
       style: "background:color-mix(in srgb," + color + " 15%,#fff)"}, [h("i", {style: "background:" + color}), g.label])]);
   }

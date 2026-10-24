@@ -55,15 +55,14 @@ architecture:
     per item, columns by day of first booking, tables. Python decides every fact; the JS only counts/filters/draws;
     names go in as JSON with '<' escaped and are inserted with textContent.
   palettes: >
-    NMG style guide only (Neil, 2026-10-24; F:\NMG\NMG - ESA\02_NMG - CPO - Pre-Existing Site Specific Reference
-    Documents\Style Guide\A9799-New Murchison Gold Limited Stylesheet-1.pdf). Gold always = a problem.
-    Status: cleared Navy #083045, not cleared Gold #927128, no work role River tint #AAC2C5, not matched Black 50% #99999A.
-    Gap type: missing Gold #927128, expired Black 93% #333334, no document Sand #F1DCAA, not on role Navy tint #8498A2.
-    validate_palette.js: CVD + normal-vision separation PASS (status all-pairs dE 24.8, gaps adjacent 22.8); chroma floor
-    FAILS by nature of the muted brand and light tints are <3:1 on white - relief = legends, value labels, tooltips, tables,
-    and a faint inset outline on swatches/segments.
-    Exception (Neil, 2026-10-24): item cells in the tables + email use Missing red #c62f3f, Expired orange #e07b12,
-    ticks green #2e7d32 (dashboard TABLE_TONE, render._MAIL_PILL); the charts keep the brand palette. Font: Proxima Nova -> Montserrat (Google Fonts) -> Aptos.
+    NMG style guide (F:\NMG\NMG - ESA\02_NMG - CPO - Pre-Existing Site Specific Reference Documents\Style Guide\
+    A9799-New Murchison Gold Limited Stylesheet-1.pdf) for header, ink, lines, surfaces, no-role and minor states;
+    Neil overrode the status semantics 2026-10-24: cleared GREEN #1e6b2e, not cleared RED #e5625c (tiles tinted, figures
+    #1e6b2e / #b3261e), ticks green; gap chart + table pills Missing red #c62f3f, Expired orange #e07b12, No document
+    Sand #F1DCAA, Not on role Navy tint #8498A2; no work role River tint #AAC2C5; not matched Black 50% #99999A.
+    validate_palette.js: green/red chosen for a lightness gap so CVD all-pairs dE 9.4 PASS (#2e7d32/#c62f3f was 3.7 FAIL);
+    gaps adjacent dE 14.7 PASS. Light tints <3:1 on white - relief = legends, labels, tooltips, tables, faint inset outline.
+    Font: Proxima Nova -> Montserrat (Google Fonts) -> Aptos.
   guard: artifact mobs-sent-<date> exists <=> that day's email sent; mobs-alerted-<date> caps failure alerts at 1/day
   local_run: python run.py build --out out   # key from C:\claude\PeopleTray DAS\reference (not in this repo)
 
