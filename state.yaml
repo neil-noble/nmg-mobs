@@ -59,10 +59,10 @@ architecture:
   palettes: >
     NMG style guide (F:\NMG\NMG - ESA\02_NMG - CPO - Pre-Existing Site Specific Reference Documents\Style Guide\
     A9799-New Murchison Gold Limited Stylesheet-1.pdf) for header, ink, lines, surfaces, no-role and minor states;
-    Neil overrode the status semantics 2026-10-24: cleared GREEN #1e6b2e, not cleared RED #e5625c (tiles tinted, figures
-    #1e6b2e / #b3261e), ticks green; gap chart + table pills Missing red #c62f3f, Expired orange #e07b12, No document
+    Neil overrode the status semantics 2026-10-24: cleared GREEN #0f4d1e, not cleared RED #e53935 (tiles tinted, figures
+    #0f4d1e / #b3261e; #e5625c read as orange to Neil), ticks green; gap chart + table pills Missing red #c62f3f, Expired orange #e07b12, No document
     Sand #F1DCAA, Not on role Navy tint #8498A2; no work role River tint #AAC2C5; not matched Black 50% #99999A.
-    validate_palette.js: green/red chosen for a lightness gap so CVD all-pairs dE 9.4 PASS (#2e7d32/#c62f3f was 3.7 FAIL);
+    validate_palette.js: green/red chosen for a lightness gap so CVD all-pairs dE 10.9 PASS (#2e7d32/#c62f3f was 3.7 FAIL);
     gaps adjacent dE 14.7 PASS. Light tints <3:1 on white - relief = legends, labels, tooltips, tables, faint inset outline.
     Table + email pills: No document also red #c62f3f (Neil 2026-10-24); the gap chart keeps Sand for it.
     Font: Proxima Nova -> Montserrat (Google Fonts) -> Aptos.

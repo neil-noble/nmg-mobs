@@ -16,7 +16,7 @@ LABEL = {
 # Inline colours for email clients, which ignore <style>: (text, background) per state,
 # NMG style guide, except Missing + No document red / Expired orange / ticks green (Neil, 2026-10-24). The label carries the meaning.
 _MAIL_PILL = {
-    C.OK: ("#2e7d32", "#E3F1E4"), C.MISSING: ("#a3222f", "#FAE3E5"), C.EXPIRED: ("#9a4f05", "#FBE9D6"),
+    C.OK: ("#0f4d1e", "#E3F1E4"), C.MISSING: ("#a3222f", "#FAE3E5"), C.EXPIRED: ("#9a4f05", "#FBE9D6"),
     C.NO_DOCUMENT: ("#a3222f", "#FAE3E5"), C.NOT_ON_ROLE: ("#083045", "#DDE3E7"),
 }
 
@@ -44,7 +44,7 @@ def email_html(report):
     parts = [
         '<div style="font-family:Aptos,Calibri,Arial,sans-serif;font-size:14px;color:#333334">',
         f"<p>Bookings {window}: <b>{report.booked_count}</b> people booked, "
-        f"<b>{len(report.cleared)}</b> cleared, <b style=\"color:#927128\">{len(report.not_cleared)}</b> not cleared, "
+        f"<b>{len(report.cleared)}</b> cleared, <b style=\"color:#c62f3f\">{len(report.not_cleared)}</b> not cleared, "
         f"<b>{len(report.no_role)}</b> with no work role in PeopleTray.</p>",
         f'<p>Live dashboard: <a href="{C.DASHBOARD_URL}">{C.DASHBOARD_URL}</a></p>',
     ]

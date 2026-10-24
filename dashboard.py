@@ -74,7 +74,7 @@ CSS = """
 :root{--navy:#083045;--river:#55848A;--pale-gold:#B19045;--river-tint:#AAC2C5;
 --ink:#333334;--ink2:#4f4f50;--muted:#6b6b6c;--line:#DBDBD3;--grid:#EDEDE9;--canvas:#EDEDE9;--card:#fff;
 /* status: green cleared, red not cleared (Neil, 2026-10-24); River tint no work role, Black 50% not matched */
---c:#1e6b2e;--n:#e5625c;--r:#AAC2C5;--u:#99999A}
+--c:#0f4d1e;--n:#e53935;--r:#AAC2C5;--u:#99999A}
 *{box-sizing:border-box}
 body{margin:0;background:var(--canvas);color:var(--ink);
 font-family:"Proxima Nova",Montserrat,Aptos,"Segoe UI",system-ui,sans-serif;font-size:13px;line-height:1.4}
@@ -169,7 +169,7 @@ td.st,th.st{text-align:center;white-space:nowrap}
 .pill{display:inline-flex;align-items:center;gap:5px;padding:1px 8px 1px 6px;border-radius:9px;font-size:11.5px;
 font-weight:600;color:var(--ink)}
 .pill i{width:8px;height:8px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
-.tick{color:#1e6b2e;font-weight:700}
+.tick{color:#0f4d1e;font-weight:700}
 details>summary{cursor:pointer;font-weight:700;font-size:13px}
 /* tooltip */
 .tip{position:fixed;z-index:10;display:none;pointer-events:none;background:#fff;border:1px solid var(--line);
@@ -225,8 +225,8 @@ JS = r"""
   "use strict";
   var D = JSON.parse(document.getElementById("mobs-data").textContent);
   var STATUS = [
-    {k: "c", label: "Cleared", color: "#1e6b2e"},
-    {k: "n", label: "Not cleared", color: "#e5625c"},
+    {k: "c", label: "Cleared", color: "#0f4d1e"},
+    {k: "n", label: "Not cleared", color: "#e53935"},
     {k: "r", label: "No work role", color: "#AAC2C5"},
     {k: "u", label: "Not matched", color: "#99999A"}
   ];
@@ -355,7 +355,7 @@ JS = r"""
         [h("span", {"class": "lab", text: label}), value, extra || null]));
     }
     tile("People booked", h("span", {"class": "val", text: String(R.length)}), "#083045");
-    tile("Cleared to mobilise", h("span", {"class": "val", text: String(ok)}), STATUS[0].color, null, "#1e6b2e");
+    tile("Cleared to mobilise", h("span", {"class": "val", text: String(ok)}), STATUS[0].color, null, "#0f4d1e");
     tile("Not cleared", h("span", {"class": "val", text: String(bad)}), STATUS[1].color, null, "#b3261e");
     tile("No work role in PeopleTray", h("span", {"class": "val", text: String(nr)}), STATUS[2].color);
     var meter = h("div", {"class": "meter", role: "img", "aria-label": "Readiness " + pct(ok, checked)},
