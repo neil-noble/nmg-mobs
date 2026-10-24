@@ -1,6 +1,6 @@
 project: NMG Mobilisation Compliance
-phase: build            # build -> operating
-status: deploying
+phase: operating
+status: live_wix_page_pending
 created: 2026-10-24
 updated: 2026-10-24
 
@@ -53,8 +53,8 @@ verified:
   - '2026-10-24 local: 20 tests pass'
   - '2026-10-24 live build (window 24 Oct-6 Nov): 351 profiles; 257 booked; cleared 175, not cleared 39, no work role 43, unmatched 0; missing Medical 15, D&A 19, Police 14, Licence 15, Induction 12; ~2 min (compliance feed is slow)'
   - '2026-10-24 page screenshot checked at 1280px and 390px (no horizontal scroll)'
+  - '2026-10-24 first Actions run 40047205848 (dispatch, send_email=true): all steps green, same counts as local; site Pages run 40047380781 deployed; live page serves 257/175/39/43; marker mobs-sent-2026-10-24 written; email arrived in Neil gmail (Updates tab); run log contains no names (grep 0)'
 
 next:
-  - deploy repos + secrets + Pages; first workflow run
   - Neil: add Wix page /nmgmobs with an iframe of pages_url (no API for this)
   - raise with PeopleTray whether bookings can be hard-gated on compliance natively
