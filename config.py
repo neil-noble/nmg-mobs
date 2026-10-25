@@ -54,7 +54,7 @@ FROM_ADDRESS = "neil.noble@emergencyservicesaustralia.com.au"
 FROM_NAME = "NMG Mobilisation Compliance"
 SUBJECT = "Mobilisation compliance - {count} booked {noun} not cleared - {date}"
 #: Daily report time; the first hourly build at or after it sends the email.
-SEND_AT_HOUR = 6
+SEND_AT_HOUR = 5   # Neil, 2026-10-25 (was 6)
 SENT_MARKER = "mobs-sent-{date}"
 ALERT_MARKER = "mobs-alerted-{date}"
 

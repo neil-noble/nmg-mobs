@@ -44,7 +44,7 @@ rules:   # Neil, 2026-10-24
     flights: /api/v2/powerbi/flightbookings; no employeeId -> match workEmail, else unique first+last name, else "unmatched" section; skip cancel=true / bookingStatus Cancelled; Waitlisted counts
     rooms: /api/v2/powerbi/roombookings (exact duplicates - dedupe); employeeId; a stay shows as first night + night count
   dashboard_privacy: names + which item is missing, public (Neil chose explicitly 2026-10-24)
-  email: daily, first hourly build >= 06:00 AWST; to Neil only for now (secret MOBS_REPORT_TO)
+  email: daily, first hourly build >= 05:00 AWST (05:05 cron-job.org run; Neil 2026-10-25, was 06:00); to skesavan@, jonjon.matias@, admin@newmurchgold.com.au (secret MOBS_REPORT_TO, set 2026-10-25; Neil no longer on it)
   refresh: hourly - primary cron-job.org job 8711243 at :05 Perth (see trigger:), backup GitHub cron '35 * * * *'; page meta-refresh 15 min
 
 architecture:
@@ -85,7 +85,7 @@ trigger:
   service: cron-job.org
   job_id: 8711243
   title: NMG Mobilisation Compliance hourly :05
-  fires: every hour at :05 Australia/Perth -> POST workflow_dispatch mobs.yml ref master (06:05 run sends the email)
+  fires: every hour at :05 Australia/Perth -> POST workflow_dispatch mobs.yml ref master (05:05 run sends the email)
   built: 2026-10-24 via REST API, headers copied from OHS job 8705425; notify onFailure x3 + onDisable
   pat: own fine-grained PAT 'nmg-mobs cron-job.org' supplied by Neil 2026-10-24 (pasted in chat), stored ONLY in the job's extendedData.headers. Never change its expiry (rotates the value)
   status: WORKING - verified 2026-10-24: first replay 403 (token lacked actions=write); Neil edited the token in place (value unchanged); stored request replayed -> HTTP 204 -> run 40062276815 success, email correctly skipped (already sent)

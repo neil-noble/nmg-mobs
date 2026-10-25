@@ -1,7 +1,7 @@
 name: Mobilisation Compliance
 
 # Hourly: rebuild the public dashboard (nmg-mobs-site -> /nmgmobs on Wix).
-# Daily: the first build at or after 06:00 AWST also emails the report (MOBS_REPORT_TO).
+# Daily: the first build at or after 05:00 AWST also emails the report (MOBS_REPORT_TO).
 # GitHub delivers `schedule` events late or not at all, so the email is not tied to one slot:
 # every build asks "is today's email still owed?" and the sent marker answers it.
 #

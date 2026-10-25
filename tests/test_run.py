@@ -22,11 +22,15 @@ def _due(monkeypatch, gh, hour, sent, force=False):
     return dict(line.split("=", 1) for line in gh.read_text().splitlines())
 
 
-def test_not_due_before_six(monkeypatch, gh):
-    assert _due(monkeypatch, gh, 5, sent=False)["due"] == "no"
+def test_not_due_before_five(monkeypatch, gh):
+    assert _due(monkeypatch, gh, 4, sent=False)["due"] == "no"
 
 
-def test_due_after_six_until_sent(monkeypatch, gh):
+def test_due_at_five(monkeypatch, gh):
+    assert _due(monkeypatch, gh, 5, sent=False)["due"] == "yes"
+
+
+def test_due_after_five_until_sent(monkeypatch, gh):
     out = _due(monkeypatch, gh, 9, sent=False)
     assert out == {"due": "yes", "marker": "mobs-sent-2026-10-24"}
 
