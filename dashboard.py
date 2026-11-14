@@ -53,8 +53,8 @@ def _rings(cx, cy, r0, step, count, seed):
     for k in range(count):
         r = r0 + step * k
         pts = []
-        for i in range(120):
-            t = 2 * math.pi * i / 120
+        for i in range(72):
+            t = 2 * math.pi * i / 72
             wob = (1 + 0.13 * math.sin(3 * t + seed + k * 0.23) + 0.07 * math.sin(5 * t + 1.7 * seed - k * 0.17)
                    + 0.035 * math.sin(9 * t + k * 0.5))
             pts.append(f"{cx + r * wob * math.cos(t):.0f} {cy + r * 0.78 * wob * math.sin(t):.0f}")
@@ -66,15 +66,20 @@ def _rings(cx, cy, r0, step, count, seed):
 
 
 def _backdrop():
-    svg = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1100" preserveAspectRatio="xMidYMid slice">'
-           '<defs><radialGradient id="g" cx="74%" cy="20%" r="34%"><stop offset="0" stop-color="#E2C77E" stop-opacity=".55"/>'
+    """A 1600x1100 tile that repeats down the page without a seam: anything crossing the top or bottom edge is
+    drawn again one tile-height away. Drawn at a fixed size, so a tall Wix iframe repeats it instead of stretching it."""
+    w, h = 1600, 1100
+    glows = rings = ""
+    for dy in (-h, 0, h):
+        glows += (f'<ellipse cx="1190" cy="{230 + dy}" rx="560" ry="420" fill="url(#g)"/>'
+                  f'<ellipse cx="230" cy="{960 + dy}" rx="640" ry="480" fill="url(#r)"/>')
+        rings += _rings(1190, 230 + dy, 26, 30, 26, 0.4) + _rings(230, 960 + dy, 40, 34, 22, 2.1)
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">'
+           '<defs><radialGradient id="g"><stop offset="0" stop-color="#E2C77E" stop-opacity=".55"/>'
            '<stop offset="1" stop-color="#E2C77E" stop-opacity="0"/></radialGradient>'
-           '<radialGradient id="r" cx="14%" cy="86%" r="40%"><stop offset="0" stop-color="#55848A" stop-opacity=".30"/>'
+           '<radialGradient id="r"><stop offset="0" stop-color="#55848A" stop-opacity=".30"/>'
            '<stop offset="1" stop-color="#55848A" stop-opacity="0"/></radialGradient></defs>'
-           '<rect width="1600" height="1100" fill="#E8EDEB"/><rect width="1600" height="1100" fill="url(#g)"/>'
-           '<rect width="1600" height="1100" fill="url(#r)"/>'
-           '<g fill="none" stroke="#083045">' + _rings(1190, 230, 26, 30, 26, 0.4) + _rings(230, 960, 40, 34, 22, 2.1)
-           + '</g></svg>')
+           f'<rect width="{w}" height="{h}" fill="#E8EDEB"/>{glows}<g fill="none" stroke="#083045">{rings}</g></svg>')
     return "data:image/svg+xml," + quote(svg, safe=" /:=,.-")
 
 
@@ -119,7 +124,7 @@ html{background:#E8EDEB}
 body{margin:0;background:transparent;color:var(--ink);
 font-family:"Proxima Nova",Montserrat,Aptos,"Segoe UI",system-ui,sans-serif;font-size:13px;line-height:1.45;
 -webkit-font-smoothing:antialiased}
-body::before{content:"";position:fixed;inset:0;z-index:-1;background:#E8EDEB center/cover no-repeat}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:#E8EDEB top center/1600px 1100px repeat-y}
 .glass{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
 border:1px solid var(--glass-edge);box-shadow:var(--lift),inset 0 1px 0 rgba(255,255,255,.6)}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.glass{background:rgba(255,255,255,.92)}}
