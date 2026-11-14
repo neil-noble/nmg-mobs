@@ -1,8 +1,8 @@
 project: NMG Mobilisation Compliance
 phase: operating
-status: live_wix_page_pending
+status: live
 created: 2026-10-24
-updated: 2026-10-25
+updated: 2026-11-15
 
 purpose: >
   PeopleTray cannot block a flight/room booking (API is read-only for bookings, no pre-booking hook).
@@ -13,7 +13,7 @@ repos:
   source: https://github.com/neil-noble/nmg-mobs        # PUBLIC (free Actions minutes), branch master
   site: https://github.com/neil-noble/nmg-mobs-site     # PUBLIC, Pages build_type=workflow, one orphan commit per build
   pages_url: https://neil-noble.github.io/nmg-mobs-site/
-  wix_page: https://www.emergencyservicesaustralia.com.au/nmgmobs   # manual Wix editor step: embed pages_url in an iframe
+  wix_page: https://www.emergencyservicesaustralia.com.au/nmgmobs   # LIVE (verified 2026-11-04): HtmlComponent url = pages_url
 secrets: [PT_API_KEY, BREVO_USERNAME, BREVO_PASSWORD, MOBS_REPORT_TO, SITE_DEPLOY_KEY]
 public_repo_rules:
   - logs print counts only, never names
@@ -73,6 +73,7 @@ architecture:
   local_run: python run.py build --out out   # key from C:\claude\PeopleTray DAS\reference (not in this repo)
 
 verified:
+  - '2026-11-15 completeness check (Neil: ESA shows 3, a 4th is missing): compliance feed 19 pages = totalRecords 1821, all 4 ESA people present; flights/rooms feeds uncapped (Oct-Jan pull 4706/26135 rows); unmatched 0. The 4th is absent only because their next booking is after the 14-day window; they appear once it enters the window. No code fault. Rebuilt via dispatch run 43651118359 (381 profiles, booked 210, cleared 196, not cleared 7, no role 7)'
   - '2026-10-25 local: 22 tests pass; Chromium 1366px: not-cleared table employer-sorted (28 rows), download gave a valid 29-row xlsx, no script errors; 390px no overflow'
   - '2026-10-24 local: 21 tests pass (after dashboard redesign)'
   - '2026-10-24 local: 22 tests pass; NMG palette + exclusions rendered at 1366/390px, no errors, no overflow'
@@ -89,6 +90,7 @@ trigger:
   built: 2026-10-24 via REST API, headers copied from OHS job 8705425; notify onFailure x3 + onDisable
   pat: own fine-grained PAT 'nmg-mobs cron-job.org' supplied by Neil 2026-10-24 (pasted in chat), stored ONLY in the job's extendedData.headers. Never change its expiry (rotates the value)
   status: WORKING - verified 2026-10-24: first replay 403 (token lacked actions=write); Neil edited the token in place (value unchanged); stored request replayed -> HTTP 204 -> run 40062276815 success, email correctly skipped (already sent)
+incidents:
+  - '2026-11-04 ~10:00 UTC (18:00 AWST): "not updating" = GitHub-wide outage (Git Operations/Actions incident). 10:05 UTC cron-job.org dispatch got HTTP 500; manual re-runs failed at the push step with "Permission denied (publickey)" (deploy key + secret unchanged, OHS dashboard failing the same way). No code/config fault. Diagnose: cron-job.org history (key in PeopleTray DAS/reference/Cronjob_api_key.txt), gh run list, githubstatus.com'
 next:
-  - Neil: add Wix page /nmgmobs with an iframe of pages_url (no API for this)
   - raise with PeopleTray whether bookings can be hard-gated on compliance natively
