@@ -5,9 +5,7 @@ page's script only counts, filters and draws. Names reach the page as JSON and a
 textContent, never as markup.
 """
 import json
-import math
 from datetime import datetime, timedelta
-from urllib.parse import quote
 from html import escape
 
 import config as C
@@ -47,41 +45,6 @@ def data(workforce):
     return {"items": list(C.ITEMS), "days": days, "people": people}
 
 
-def _rings(cx, cy, r0, step, count, seed):
-    """Closed, gently irregular contour rings around one centre, like an ore-body grade-shell plan."""
-    paths = []
-    for k in range(count):
-        r = r0 + step * k
-        pts = []
-        for i in range(72):
-            t = 2 * math.pi * i / 72
-            wob = (1 + 0.13 * math.sin(3 * t + seed + k * 0.23) + 0.07 * math.sin(5 * t + 1.7 * seed - k * 0.17)
-                   + 0.035 * math.sin(9 * t + k * 0.5))
-            pts.append(f"{cx + r * wob * math.cos(t):.0f} {cy + r * 0.78 * wob * math.sin(t):.0f}")
-        # every fifth line is an index contour, drawn a little heavier - as on a survey plan
-        heavy = k % 5 == 4
-        paths.append(f'<path d="M{"L".join(pts)}Z" stroke-width="{1.6 if heavy else 0.8}" '
-                     f'stroke-opacity="{0.30 if heavy else 0.16}"/>')
-    return "".join(paths)
-
-
-def _backdrop():
-    """A 1600x1100 tile that repeats down the page without a seam: anything crossing the top or bottom edge is
-    drawn again one tile-height away. Drawn at a fixed size, so a tall Wix iframe repeats it instead of stretching it."""
-    w, h = 1600, 1100
-    glows = rings = ""
-    for dy in (-h, 0, h):
-        glows += (f'<ellipse cx="1190" cy="{230 + dy}" rx="560" ry="420" fill="url(#g)"/>'
-                  f'<ellipse cx="230" cy="{960 + dy}" rx="640" ry="480" fill="url(#r)"/>')
-        rings += _rings(1190, 230 + dy, 26, 30, 26, 0.4) + _rings(230, 960 + dy, 40, 34, 22, 2.1)
-    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">'
-           '<defs><radialGradient id="g"><stop offset="0" stop-color="#E2C77E" stop-opacity=".55"/>'
-           '<stop offset="1" stop-color="#E2C77E" stop-opacity="0"/></radialGradient>'
-           '<radialGradient id="r"><stop offset="0" stop-color="#55848A" stop-opacity=".30"/>'
-           '<stop offset="1" stop-color="#55848A" stop-opacity="0"/></radialGradient></defs>'
-           f'<rect width="{w}" height="{h}" fill="#E8EDEB"/>{glows}<g fill="none" stroke="#083045">{rings}</g></svg>')
-    return "data:image/svg+xml," + quote(svg, safe=" /:=,.-")
-
 
 def _json_for_script(value):
     # "<" can never close the <script> block or open a comment once escaped.
@@ -98,8 +61,7 @@ def page(workforce, generated: datetime):
         '<link rel="preconnect" href="https://fonts.googleapis.com">'
         '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
         '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap">'
-        f"<title>{escape(C.TITLE)}</title><style>{CSS}"
-        f'body::before{{background-image:url("{_backdrop()}")}}</style></head><body>'
+        f"<title>{escape(C.TITLE)}</title><style>{CSS}</style></head><body>"
         f'<header><div class="bar"><div><h1>{escape(C.TITLE)}</h1>'
         f"<p>Every Crown Prince worker in PeopleTray against the five mobilisation items: medical, D&amp;A screen, "
         f"police clearance, driver's licence and site induction. Next bookings are read up to {horizon}.</p></div>"
@@ -120,11 +82,13 @@ CSS = """
 --blur:blur(18px) saturate(150%);--lift:0 1px 1px rgba(8,48,69,.05),0 8px 24px -12px rgba(8,48,69,.22);
 --r1:14px;--r2:10px}
 *{box-sizing:border-box}
-html{background:#E8EDEB}
+html{background:#EEF2F1}
 body{margin:0;background:transparent;color:var(--ink);
 font-family:"Proxima Nova",Montserrat,Aptos,"Segoe UI",system-ui,sans-serif;font-size:13px;line-height:1.45;
 -webkit-font-smoothing:antialiased}
-body::before{content:"";position:fixed;inset:0;z-index:-1;background:#E8EDEB top center/1600px 1100px repeat-y}
+/* backdrop: soft colour fields in the NMG palette for the glass to pick up (Neil, 2026-11-15: no lines).
+Fixed-size tile, every field fades out inside it, so a tall Wix iframe repeats it without a seam. */
+body::before{content:"";position:fixed;inset:0;z-index:-1;background-color:#EEF2F1;background-image:radial-gradient(circle 560px at 80% 30%,rgba(226,199,126,.50),rgba(226,199,126,0) 68%),radial-gradient(circle 600px at 10% 58%,rgba(85,132,138,.34),rgba(85,132,138,0) 66%),radial-gradient(circle 480px at 62% 74%,rgba(8,48,69,.13),rgba(8,48,69,0) 68%),radial-gradient(circle 420px at 30% 14%,rgba(170,194,197,.40),rgba(170,194,197,0) 68%);background-size:1600px 1400px;background-position:top center;background-repeat:repeat-y}
 .glass{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
 border:1px solid var(--glass-edge);box-shadow:var(--lift),inset 0 1px 0 rgba(255,255,255,.6)}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.glass{background:rgba(255,255,255,.92)}}

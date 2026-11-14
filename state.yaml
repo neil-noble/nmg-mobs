@@ -64,7 +64,7 @@ architecture:
     Neil asked for elevated hierarchy + frosted glass. Groups in order of work: Where things stand (hero not-cleared
     count + tiles + donut) > Who to chase (not-cleared table, primary) > Where the gaps are > Who is arriving >
     Other lists (accordions: no work role, unmatched, cleared). Frosted panels (backdrop-filter blur 18px, white .5)
-    over a fixed SVG ore-body contour plan drawn in Python (dashboard._backdrop; data URI - '#' MUST be percent-encoded);
+    over soft NMG-palette colour fields (CSS radial gradients, fixed 1600x1400 tile, repeat-y, each field fades inside the tile; Neil 2026-11-15 rejected contour lines - wants clean modern frosted, no pattern);
     sticky frosted slicer bar; frosted tooltip; reduced-transparency + no-backdrop-filter fallbacks.
   palettes: >
     NMG style guide (F:\NMG\NMG - ESA\02_NMG - CPO - Pre-Existing Site Specific Reference Documents\Style Guide\
