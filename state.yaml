@@ -39,7 +39,11 @@ rules:   # Neil, 2026-10-24
   employer_exclusions: (Neil, 2026-10-24) not-cleared people from New Murchison Gold Ltd, and no-work-role people from
     Meeka Metals / WestGold, are left out entirely (not shown, not counted; config.*_EXCLUDED_EMPLOYERS, case-insensitive).
     Cleared NMG people still count. Build log prints 'excluded by employer N' (49 on 2026-10-24)
-  window: today .. today+13 (14 days, AWST)
+  window: today .. today+13 (14 days, AWST) - the EMAIL only (unchanged)
+  dashboard_scope: (Neil, 2026-11-15) EVERY worker in the compliance feed, booked or not, same employer exclusions;
+    next booking read out to HORIZON_DAYS=365 (one flights/rooms pull serves email + page); room stays split into
+    separate bookings by gaps; 'Bookings' slicer = All workers | next 14 days | booked later | no booking.
+    model.assess_all -> Workforce; assess (email) unchanged
   bookings:
     flights: /api/v2/powerbi/flightbookings; no employeeId -> match workEmail, else unique first+last name, else "unmatched" section; skip cancel=true / bookingStatus Cancelled; Waitlisted counts
     rooms: /api/v2/powerbi/roombookings (exact duplicates - dedupe); employeeId; a stay shows as first night + night count
@@ -56,6 +60,12 @@ architecture:
     % of each employer's BOOKED people (in the window) not cleared, red fill on a 100% rail, employers with 0 not
     cleared folded into a note (Neil 2026-10-24; denominator = booked, not all PeopleTray profiles - my call). Python decides every fact; the JS only counts/filters/draws;
     names go in as JSON with '<' escaped and are inserted with textContent.
+  design_2026_11_15: >
+    Neil asked for elevated hierarchy + frosted glass. Groups in order of work: Where things stand (hero not-cleared
+    count + tiles + donut) > Who to chase (not-cleared table, primary) > Where the gaps are > Who is arriving >
+    Other lists (accordions: no work role, unmatched, cleared). Frosted panels (backdrop-filter blur 18px, white .5)
+    over a fixed SVG ore-body contour plan drawn in Python (dashboard._backdrop; data URI - '#' MUST be percent-encoded);
+    sticky frosted slicer bar; frosted tooltip; reduced-transparency + no-backdrop-filter fallbacks.
   palettes: >
     NMG style guide (F:\NMG\NMG - ESA\02_NMG - CPO - Pre-Existing Site Specific Reference Documents\Style Guide\
     A9799-New Murchison Gold Limited Stylesheet-1.pdf) for header, ink, lines, surfaces, no-role and minor states;

@@ -1,7 +1,7 @@
 from datetime import date
 
 import config as C
-from model import assess, build_people, row_state
+from model import assess, assess_all, build_people, row_state
 
 TODAY = date(2026, 10, 24)
 
@@ -147,3 +147,39 @@ def test_excluded_employers_leave_only_their_section():
     assert [b.person.last for b in r.no_role] == ["NMGNOROLE"]          # Meeka left out, NMG kept
     assert sorted(b.person.last for b in r.excluded) == ["GAP", "MEEKA"]
     assert r.booked_count == 2
+
+
+def test_all_workers_listed_with_next_booking():
+    rows = (full_set("1") + full_set("2", first="Bo", last="LATER", email="2@x.au")
+            + full_set("3", first="Cy", last="NONE", email="3@x.au"))
+    flights = [flight("Ann", "SMITH", "2026-10-26", "1@x.au"), flight("Bo", "LATER", "2026-12-20", "2@x.au"),
+               flight("Bo", "LATER", "2026-10-01", "2@x.au")]               # past flights are ignored
+    wf = assess_all(build_people(rows), flights, [], TODAY)
+    by = {w.person.last: w for w in wf.workers}
+    assert set(by) == {"SMITH", "LATER", "NONE"}
+    assert wf.in_window(by["SMITH"]) and not wf.in_window(by["LATER"])
+    assert by["LATER"].next.day == date(2026, 12, 20)
+    assert by["NONE"].next is None and not wf.in_window(by["NONE"])
+    assert [w.person.last for w in wf.workers] == ["SMITH", "LATER", "NONE"]   # booked soonest first
+
+
+def test_all_workers_keep_the_employer_exclusions():
+    nmg = dict(employer="New Murchison Gold Ltd")
+    rows = (full_set("1", **nmg) + full_set("2", first="Bo", last="GAP", email="2@x.au", **nmg)
+            + [comp("3", "Other", "Does not expire", role="", first="Cy", last="WG", email="3@x.au",
+                    employer="westgold")])
+    rows[6] = comp("2", "National Police Clearance", "No document added", first="Bo", last="GAP",
+                   email="2@x.au", **nmg)
+    wf = assess_all(build_people(rows), [], [], TODAY)
+    assert [w.person.last for w in wf.workers] == ["SMITH"]
+    assert wf.excluded == 2
+
+
+def test_separate_stays_are_separate_bookings():
+    people = build_people(full_set("1"))
+    rooms = [room("1", "2026-10-25"), room("1", "2026-10-26"), room("1", "2026-11-20"), room("1", "2026-11-21")]
+    w = assess_all(people, [], rooms, TODAY).workers[0]
+    assert [(b.day, b.detail) for b in w.bookings] == [(date(2026, 10, 25), "Westgold Camp, 2 night(s)"),
+                                                        (date(2026, 11, 20), "Westgold Camp, 2 night(s)")]
+    # the email's window view still reads one stay per person
+    assert len(assess(people, [], rooms, TODAY).cleared[0].bookings) == 1

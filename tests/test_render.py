@@ -5,21 +5,30 @@ from datetime import date, datetime
 import config as C
 import dashboard
 import render
-from model import assess, build_people
+from model import assess, assess_all, build_people
 from tests.test_model import comp, flight, full_set, room
 
 TODAY = date(2026, 10, 24)
 NOW = datetime(2026, 10, 24, 6, 0, tzinfo=C.AWST)
 
 
-def _report():
+def _inputs():
     rows = full_set("1") + full_set("2", first="Bo", last="O'NEIL </script><b>", email="2@x.au")
     rows[2] = comp("1", "National Police Clearance", "No document added")
     rows += [comp("3", "Other", "Does not expire", role="", first="Cy", last="NOROLE", email="3@x.au")]
     flights = [flight("Ann", "SMITH", "2026-10-26", "1@x.au"),
                flight("Bo", "O'NEIL </script><b>", "2026-10-27", "2@x.au"),
                flight("Zed", "UNKNOWN", "2026-10-28", "z@x.au")]
-    return assess(build_people(rows), flights, [room("3", "2026-10-25")], TODAY)
+    rows += full_set("4", first="Di", last="UNBOOKED", email="4@x.au")
+    return build_people(rows), flights, [room("3", "2026-10-25")]
+
+
+def _report():
+    return assess(*_inputs(), TODAY)
+
+
+def _workforce():
+    return assess_all(*_inputs(), TODAY)
 
 
 def _embedded(page):
@@ -28,7 +37,7 @@ def _embedded(page):
 
 
 def test_dashboard_data_carries_every_section():
-    d = dashboard.data(_report())
+    d = dashboard.data(_workforce())
     by_name = {p["n"]: p for p in d["people"]}
     assert by_name["SMITH, Ann"]["s"] == "n"
     assert by_name["SMITH, Ann"]["st"] == ["ok", "ok", "missing", "ok", "ok"]
@@ -36,10 +45,14 @@ def test_dashboard_data_carries_every_section():
     assert by_name["UNKNOWN, Zed"]["s"] == "u"
     assert d["items"] == list(C.ITEMS)
     assert d["days"][0] == "2026-10-24" and len(d["days"]) == C.LOOKAHEAD_DAYS
+    # every worker is listed, booked or not (Neil, 2026-11-15)
+    assert by_name["UNBOOKED, Di"]["s"] == "c" and by_name["UNBOOKED, Di"]["d"] is None
+    assert by_name["UNBOOKED, Di"]["w"] is False
+    assert by_name["SMITH, Ann"]["d"] == "2026-10-26" and by_name["SMITH, Ann"]["w"] is True
 
 
 def test_names_cannot_break_out_of_the_data_block():
-    page = dashboard.page(_report(), NOW)
+    page = dashboard.page(_workforce(), NOW)
     raw = re.search(r'<script id="mobs-data" type="application/json">(.*?)</script>', page, re.S).group(1)
     assert "<" not in raw
     names = {p["n"] for p in _embedded(page)["people"]}
@@ -47,7 +60,7 @@ def test_names_cannot_break_out_of_the_data_block():
 
 
 def test_empty_report_renders():
-    page = dashboard.page(assess({}, [], [], TODAY), NOW)
+    page = dashboard.page(assess_all({}, [], [], TODAY), NOW)
     assert _embedded(page)["people"] == []
 
 

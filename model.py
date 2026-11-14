@@ -165,18 +165,21 @@ def _live_flight(row):
     return not row.get("cancel") and (row.get("bookingStatus") or "") != "Cancelled"
 
 
-def assess(people, flights, rooms, today: date, days=C.LOOKAHEAD_DAYS) -> Report:
-    end = today + timedelta(days=days - 1)
+def _match(people, flights, rooms, start: date, end: date, split_stays=False):
+    """Bookings from start..end per employeeId, plus bookings matched to no profile.
+
+    Rooms: one booking per person (first night + night count), or with split_stays one per run of
+    consecutive nights, so a later return trip reads as its own booking."""
     by_email = {p.email: eid for eid, p in people.items() if p.email}
     by_name = defaultdict(list)
     for eid, p in people.items():
         by_name[(p.first.lower(), p.last.lower())].append(eid)
 
     bookings = defaultdict(set)        # employeeId -> {Booking}
-    unmatched = {}                     # (first, last) -> Unmatched
+    unmatched = {}                     # name -> Unmatched
     for row in flights:
         day = _day(row["flightDate"])
-        if not (today <= day <= end and _live_flight(row)):
+        if not (start <= day <= end and _live_flight(row)):
             continue
         booking = Booking(day, "Flight", _flight_detail(row))
         eid = by_email.get((row.get("workEmail") or "").strip().lower())
@@ -185,7 +188,7 @@ def assess(people, flights, rooms, today: date, days=C.LOOKAHEAD_DAYS) -> Report
             candidates = by_name.get(key, [])
             eid = candidates[0] if len(candidates) == 1 else None
         if eid is None:
-            name = f"{(row.get('lastName') or '').upper()}, {row.get('firstName') or ''}"
+            name = f"{(row.get('lastName') or '').strip().upper()}, {(row.get('firstName') or '').strip()}"
             u = unmatched.setdefault(name, Unmatched(name, (row.get("employer") or "").strip(), []))
             u.bookings.append(booking)
             continue
@@ -194,36 +197,104 @@ def assess(people, flights, rooms, today: date, days=C.LOOKAHEAD_DAYS) -> Report
     rooms_by_person = defaultdict(list)
     for row in rooms:
         day = _day(row["dateOfBooking"])
-        if today <= day <= end:
+        if start <= day <= end:
             rooms_by_person[str(row.get("employeeId") or "").strip()].append((day, row))
     for eid, nights in rooms_by_person.items():
         if eid not in people:
             row = nights[0][1]
-            name = f"{(row.get('personLastName') or '').upper()}, {row.get('personFirstName') or ''}"
+            name = f"{(row.get('personLastName') or '').strip().upper()}, {(row.get('personFirstName') or '').strip()}"
             u = unmatched.setdefault(name, Unmatched(name, (row.get("employer") or "").strip(), []))
             u.bookings.extend(Booking(d, "Room", (r.get("roomCamp") or "").strip()) for d, r in nights)
             continue
-        # A run of room nights reads as one booking: show the first night of the stay.
         nights.sort(key=lambda n: n[0])
-        first_day, first_row = nights[0]
-        bookings[eid].add(Booking(first_day, "Room", f"{(first_row.get('roomCamp') or '').strip()}, "
-                                                    f"{len({d for d, _ in nights})} night(s)"))
+        stays = [[nights[0]]]
+        for night in nights[1:]:
+            if split_stays and (night[0] - stays[-1][-1][0]).days > 1:
+                stays.append([night])
+            else:
+                stays[-1].append(night)
+        # A run of room nights reads as one booking: show the first night of the stay.
+        for stay in stays:
+            first_day, first_row = stay[0]
+            bookings[eid].add(Booking(first_day, "Room", f"{(first_row.get('roomCamp') or '').strip()}, "
+                                                        f"{len({d for d, _ in stay})} night(s)"))
+    for u in unmatched.values():
+        u.bookings.sort(key=lambda b: (b.day, b.kind))
+    return bookings, unmatched
 
-    not_cleared_out = {e.casefold() for e in C.NOT_CLEARED_EXCLUDED_EMPLOYERS}
-    no_role_out = {e.casefold() for e in C.NO_ROLE_EXCLUDED_EMPLOYERS}
+
+def _status(person):
+    """'r' no work role, 'n' not cleared, 'c' cleared."""
+    if not person.roles:
+        return "r"
+    return "n" if person.gaps() else "c"
+
+
+def _excluded(person, status):
+    employer = person.employer.strip().casefold()
+    if status == "r":
+        return employer in {e.casefold() for e in C.NO_ROLE_EXCLUDED_EMPLOYERS}
+    if status == "n":
+        return employer in {e.casefold() for e in C.NOT_CLEARED_EXCLUDED_EMPLOYERS}
+    return False
+
+
+def assess(people, flights, rooms, today: date, days=C.LOOKAHEAD_DAYS) -> Report:
+    """Everyone booked in the window (the daily email)."""
+    end = today + timedelta(days=days - 1)
+    bookings, unmatched = _match(people, flights, rooms, today, end)
     cleared, not_cleared, no_role, excluded = [], [], [], []
     for eid, items in bookings.items():
         booked = Booked(people[eid], sorted(items, key=lambda b: (b.day, b.kind)))
-        employer = booked.person.employer.strip().casefold()
-        if not booked.person.roles:
-            (excluded if employer in no_role_out else no_role).append(booked)
-        elif booked.person.gaps():
-            (excluded if employer in not_cleared_out else not_cleared).append(booked)
+        status = _status(booked.person)
+        if _excluded(booked.person, status):
+            excluded.append(booked)
         else:
-            cleared.append(booked)
-    for u in unmatched.values():
-        u.bookings.sort(key=lambda b: (b.day, b.kind))
+            {"r": no_role, "n": not_cleared, "c": cleared}[status].append(booked)
     order = lambda b: (b.first.day, b.person.last.lower(), b.person.first.lower())
     return Report(today, end, sorted(cleared, key=order), sorted(not_cleared, key=order),
                   sorted(no_role, key=order),
                   sorted(unmatched.values(), key=lambda u: (u.bookings[0].day, u.name)), excluded)
+
+
+@dataclass
+class Worker:
+    person: Person
+    status: str        # "c" cleared, "n" not cleared, "r" no work role
+    bookings: list     # upcoming bookings, earliest first; empty = no booking
+
+    @property
+    def next(self):
+        return self.bookings[0] if self.bookings else None
+
+
+@dataclass
+class Workforce:
+    """Every worker in PeopleTray, booked or not (the dashboard; Neil, 2026-11-15)."""
+    today: date
+    end: date          # end of the booking window (the email's 14 days)
+    horizon: date      # bookings are looked for up to this day
+    workers: list
+    unmatched: list
+    excluded: int = 0
+
+    def in_window(self, worker):
+        return worker.next is not None and worker.next.day <= self.end
+
+
+def assess_all(people, flights, rooms, today: date, horizon_days=C.HORIZON_DAYS,
+               days=C.LOOKAHEAD_DAYS) -> Workforce:
+    end = today + timedelta(days=days - 1)
+    horizon = today + timedelta(days=horizon_days - 1)
+    bookings, unmatched = _match(people, flights, rooms, today, horizon, split_stays=True)
+    workers, excluded = [], 0
+    for eid, person in people.items():
+        status = _status(person)
+        if _excluded(person, status):
+            excluded += 1
+            continue
+        workers.append(Worker(person, status, sorted(bookings.get(eid, ()), key=lambda b: (b.day, b.kind))))
+    workers.sort(key=lambda w: (w.next is None, w.next.day if w.next else today,
+                                w.person.last.lower(), w.person.first.lower()))
+    return Workforce(today, end, horizon, workers,
+                     sorted(unmatched.values(), key=lambda u: (u.bookings[0].day, u.name)), excluded)

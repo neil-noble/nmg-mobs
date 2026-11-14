@@ -22,7 +22,7 @@ import config as C
 import dashboard
 import peopletray
 import render
-from model import assess, build_people
+from model import assess, assess_all, build_people
 
 
 def now_awst():
@@ -33,12 +33,16 @@ def cmd_build(args):
     now = now_awst()
     today = now.date()
     end = today + timedelta(days=C.LOOKAHEAD_DAYS - 1)
+    horizon = today + timedelta(days=C.HORIZON_DAYS - 1)
     people = build_people(peopletray.fetch_compliance())
-    report = assess(people, peopletray.fetch_flight_bookings(today, end),
-                    peopletray.fetch_room_bookings(today, end), today)
+    # One pull out to the horizon serves both: the email reads its 14 days, the dashboard all of it.
+    flights = peopletray.fetch_flight_bookings(today, horizon)
+    rooms = peopletray.fetch_room_bookings(today, horizon)
+    report = assess(people, flights, rooms, today)
+    workforce = assess_all(people, flights, rooms, today)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    (out / "index.html").write_text(dashboard.page(report, now), encoding="utf-8")
+    (out / "index.html").write_text(dashboard.page(workforce, now), encoding="utf-8")
     (out / "email.html").write_text(render.email_html(report), encoding="utf-8")
     (out / "email.txt").write_text(render.email_text(report), encoding="utf-8")
     (out / "subject.txt").write_text(render.email_subject(report, today), encoding="utf-8")
@@ -46,6 +50,10 @@ def cmd_build(args):
           f"cleared {len(report.cleared)}, not cleared {len(report.not_cleared)}, "
           f"no work role {len(report.no_role)}, unmatched {len(report.unmatched)}, "
           f"excluded by employer {len(report.excluded)}")
+    booked = sum(1 for w in workforce.workers if w.next)
+    print(f"dashboard: {len(workforce.workers)} workers (booked to {horizon} {booked}, no booking "
+          f"{len(workforce.workers) - booked}), unmatched {len(workforce.unmatched)}, "
+          f"excluded by employer {workforce.excluded}")
     print("missing by item: " + ", ".join(f"{k} {v}" for k, v in report.gap_counts().items()))
 
 

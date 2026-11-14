@@ -11,6 +11,8 @@ ROOMS_PATH = "/api/v2/powerbi/roombookings"
 
 #: Bookings from today up to this many days ahead are checked (Neil, 2026-10-24).
 LOOKAHEAD_DAYS = 14
+#: The dashboard lists every worker with their next booking up to this many days ahead (Neil, 2026-11-15).
+HORIZON_DAYS = 365
 
 # ── The five mobilisation items (Neil, 2026-10-24) ────────────────────────────
 MEDICAL = "Medical"
