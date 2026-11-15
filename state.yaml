@@ -2,7 +2,7 @@ project: NMG Mobilisation Compliance
 phase: operating
 status: live
 created: 2026-10-24
-updated: 2026-11-15
+updated: 2026-11-16
 
 purpose: >
   PeopleTray cannot block a flight/room booking (API is read-only for bookings, no pre-booking hook).
@@ -79,6 +79,18 @@ architecture:
     Other lists (accordions: no work role, unmatched, cleared). Frosted panels (backdrop-filter blur 18px, white .5)
     over soft NMG-palette colour fields (CSS radial gradients, fixed 1600x1400 tile, repeat-y, each field fades inside the tile; Neil 2026-11-15 rejected contour lines - wants clean modern frosted, no pattern);
     sticky frosted slicer bar; frosted tooltip; reduced-transparency + no-backdrop-filter fallbacks.
+  design_2026_11_16: >
+    SUPERSEDES the look of design_2026_11_15 (structure and rules unchanged). Neil: use the NMG style guide, keep frosted
+    glass, look high-end for a top-tier miner. Chosen from 3 rendered directions (porcelain / night / navy stage): NAVY
+    STAGE = masthead + sticky navy-glass filters + hero on the guide's Navy->River gradient, ending on a Gold->Sand
+    rule; hero = big not-cleared count left, 'manifest' (one mark per worker, status order, grouped in tens, placed on
+    whole device pixels by layoutStrip(); each ten closes into a block when marks < 2 device px; waffle grid < 820px;
+    hover = person + missing items, click = jump to + flash their row, opening folded lists) + 3 figures right; donut
+    removed. Light section: frosted cards on the Cool Grey field, gold Gold->Sand mark above each section heading,
+    'What is missing' as label-over-bar rows, tables -> one card per person < 820px. Gold light on navy turns olive:
+    gold only as line/type. Font Figtree (true Black 900 + tabular figures) for Proxima Nova. dashboard.html(d, horizon,
+    generated) renders from built data (page() calls it) so a design can be previewed on a live page's data.
+    Design log: docs/design/dashboard-2026-11-16/README.md (self-critique 7.6/10, open items there).
   palettes: >
     NMG style guide (F:\NMG\NMG - ESA\02_NMG - CPO - Pre-Existing Site Specific Reference Documents\Style Guide\
     A9799-New Murchison Gold Limited Stylesheet-1.pdf) for header, ink, lines, surfaces, no-role and minor states;
@@ -91,7 +103,7 @@ architecture:
     Not-cleared table (Neil 2026-10-25): sorted employer A-Z, then first booking, then name; top-right 'Download Excel'
     button writes exactly the filtered table to .xlsx (ExcelJS 4.4.0 from cdnjs with SRI, lazy-loaded on click;
     Missing/Expired/No document cells filled, header navy, frozen + autofilter). Email order unchanged.
-    Font: Proxima Nova -> Montserrat (Google Fonts) -> Aptos.
+    Font (2026-11-16): Figtree (Google Fonts) -> Proxima Nova -> Aptos; was Montserrat.
   guard: artifact mobs-sent-<date> exists <=> that day's email sent; mobs-alerted-<date> caps failure alerts at 1/day
   local_run: python run.py build --out out   # key from C:\claude\PeopleTray DAS\reference (not in this repo)
 
