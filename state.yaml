@@ -91,6 +91,9 @@ architecture:
     gold only as line/type. Font Figtree (true Black 900 + tabular figures) for Proxima Nova. dashboard.html(d, horizon,
     generated) renders from built data (page() calls it) so a design can be previewed on a live page's data.
     Design log: docs/design/dashboard-2026-11-16/README.md (self-critique 7.6/10, open items there).
+    WIX FIT: the /nmgmobs embed frame is 1237 x 4764 px (measured 2026-11-16). Page must stay under 4764 at 1237 wide
+    or it scrolls inside the frame: long lists scroll in their card (max 620px, sticky header), rows ~40px; page
+    = 4508px on 2026-11-16 data. Re-measure after any layout change (old design was 4071).
   palettes: >
     NMG style guide (F:\NMG\NMG - ESA\02_NMG - CPO - Pre-Existing Site Specific Reference Documents\Style Guide\
     A9799-New Murchison Gold Limited Stylesheet-1.pdf) for header, ink, lines, surfaces, no-role and minor states;

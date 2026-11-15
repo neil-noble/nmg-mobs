@@ -43,6 +43,16 @@ On load the marks rise left to right (follow-through, slow-out), once; reduced m
   download (valid .xlsx), keyboard focus ring on filters, reduced motion (0 animations), empty data set.
 - Tables become one card per person below 820px, showing only the missing items.
 
+## Fitting the Wix embed
+
+The Wix HTML embed on /nmgmobs is a fixed 1237 x 4764 px frame. The old design was 4071 px tall there; the first
+cut of this one was 5955 px, so its bottom scrolled inside the frame (scroll within scroll). Fixed by: rows at
+8 px padding (about 40 px rows), 60 px between sections, and long lists (chase, cleared, no work role, on site)
+scrolling inside their card under a sticky header, capped at 620 px, the Power BI table pattern. The page is now
+4508 px at 1237 px wide and stays about that height as the lists grow; only the employer-share chart still
+grows with the number of employers (about 32 px each). At that width the Booking column takes what is left and
+truncates, with the full text on hover.
+
 ## Critique, round 1 (self-scored from the captures; no separate critic was started)
 
 Design 7.5, Usability 8, Creativity 7, Content 8 -> weighted 7.6.

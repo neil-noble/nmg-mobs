@@ -135,7 +135,7 @@ background-size:1600px 1400px;background-position:top center;background-repeat:r
 .canvas{max-width:1440px;margin:0 auto;padding:0 32px}
 /* ── the stage: guide gradient Navy -> River, lit from the top right, ending on a Gold -> Sand rule.
 (Gold light on navy turns olive, so gold stays in the rule, the type and the section marks.) ── */
-.stagebox{position:relative;margin-bottom:112px}
+.stagebox{position:relative;margin-bottom:104px}
 .stagebox::before,.stagebox::after{content:"";position:absolute;left:calc(50% - 50vw);width:100vw;top:-1400px;bottom:-56px}
 .stagebox::before{z-index:-2;background:linear-gradient(160deg,#083045 0%,#0a3a52 52%,#2f6168 100%)}
 .stagebox::after{z-index:-1;background:
@@ -229,7 +229,7 @@ transition:transform .16s var(--out),filter .16s var(--out)}
 .mlegend .hint{margin-left:auto;color:var(--muted);font-size:12.5px}
 .sw{display:inline-block;width:10px;height:10px;border-radius:3px;flex:none}
 /* ── groups ── */
-.group{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;margin-top:72px;scroll-margin-top:120px}
+.group{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;margin-top:60px;scroll-margin-top:120px}
 .stagebox+.group{margin-top:0}
 .gh{grid-column:1/-1;display:flex;flex-direction:column;gap:4px;margin-bottom:4px}
 .gh::before{content:"";width:28px;height:3px;border-radius:2px;margin-bottom:12px;background:linear-gradient(90deg,var(--gold),var(--sand))}
@@ -253,7 +253,7 @@ transition:background-color .14s var(--out),transform .1s var(--out),opacity .14
 .btn:hover:not(:disabled){background:#0d4560}
 .btn:active:not(:disabled){transform:scale(.97)}
 .btn:disabled{opacity:.45;cursor:default}
-.where{display:inline-flex;align-items:center;gap:7px;height:24px;padding:0 10px 0 9px;border-radius:999px;font-size:12.5px;
+.where{display:inline-flex;align-items:center;gap:7px;height:22px;padding:0 10px 0 9px;border-radius:999px;font-size:12.5px;
 font-weight:700;white-space:nowrap}
 .where i{width:7px;height:7px;border-radius:50%}
 .where.now{background:var(--bad-ink);color:#fff}.where.now i{background:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.25)}
@@ -306,7 +306,7 @@ background:var(--navy);color:#fff;font-weight:700}
 /* ── tables ── */
 .scroll{overflow-x:auto;margin:0 -8px;padding:0 8px}
 table{border-collapse:collapse;width:100%;font-size:13.5px}
-th,td{padding:12px 12px;text-align:left;vertical-align:middle}
+th,td{padding:8px 12px;text-align:left;vertical-align:middle}
 thead th{font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap;border-bottom:1px solid var(--line-2);padding-top:4px}
 tbody td{border-bottom:1px solid var(--line)}
 tbody tr:last-child td{border-bottom:0}
@@ -315,12 +315,24 @@ tbody tr:hover{background:rgba(248,238,213,.6)}
 tbody tr.flash{animation:flash 1.8s var(--out)}
 @keyframes flash{0%,30%{background:rgba(241,220,170,.85)}}
 td.nm{font-weight:600;color:var(--ink);white-space:nowrap}
-td.em{color:var(--ink-2)}
+td.em{color:var(--ink-2);white-space:nowrap}
 td.when{white-space:nowrap;font-variant-numeric:tabular-nums}
-td.bk{color:var(--ink-2)}
-td.st,th.st{text-align:center;white-space:nowrap}
+td.bk{color:var(--ink-2);width:24%;max-width:0}  /* takes what the other columns leave, truncating with a tooltip */
+td.bk .bkx{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td.st,th.st{text-align:center;white-space:nowrap;padding-left:6px;padding-right:6px}
+th.st{white-space:normal;line-height:1.25;min-width:84px}
+/* long lists scroll inside their card under a sticky header, so the page keeps one height whatever the data
+(the Wix embed has a fixed height) */
+.tp{max-height:620px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(8,48,69,.28) transparent}
+.tp thead th{position:sticky;top:0;z-index:1;background:rgba(246,246,243,.97);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.tp table{margin-bottom:28px}
+.tp::after{content:"";position:sticky;bottom:0;display:block;height:28px;margin-top:-28px;pointer-events:none;
+background:linear-gradient(rgba(246,246,243,0),rgba(246,246,243,.95))}
+.tp::-webkit-scrollbar{width:8px;height:8px}
+.tp::-webkit-scrollbar-thumb{background:rgba(8,48,69,.22);border-radius:4px}
+.tp::-webkit-scrollbar-track{background:transparent}
 .more{color:var(--muted)}
-.pill{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px 0 9px;border-radius:999px;font-size:12.5px;
+.pill{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 10px 0 9px;border-radius:999px;font-size:12.5px;
 font-weight:600;color:var(--ink);white-space:nowrap}
 .pill i{width:7px;height:7px;border-radius:50%;flex:none}
 .pill .it{display:none}
@@ -358,7 +370,7 @@ box-shadow:0 16px 40px -14px rgba(8,48,69,.45),0 1px 2px rgba(8,48,69,.08);paddi
 .tip .tr i{display:block;width:10px;height:10px;border-radius:3px}
 .tip .tr b{font-variant-numeric:tabular-nums;font-weight:700}
 .tip .tr span{color:var(--ink-2)}
-.foot{margin:72px 0 0;padding:22px 0 40px;border-top:1px solid var(--line-2);font-size:12.5px;color:var(--muted)}
+.foot{margin:60px 0 0;padding:20px 0 32px;border-top:1px solid var(--line-2);font-size:12.5px;color:var(--muted)}
 .group>.v{align-self:stretch}
 .group>.v.top{align-self:start}
 /* ── entrance: the stage settles once per load ── */
@@ -387,7 +399,7 @@ tbody tr.flash{animation-duration:2.4s}}
 .hb{grid-template-columns:minmax(80px,36%) 1fr}.rail{flex-basis:calc(100% - 96px)}
 .fold>summary{padding:16px 56px 16px 18px}.fold>summary::after{right:16px}.fold>.body{padding:0 18px 16px}
 /* tables become one card per person */
-.scroll{overflow:visible;margin:0;padding:0}
+.scroll{overflow:visible;margin:0;padding:0}.tp{max-height:none}.tp table{margin-bottom:0}.tp::after{display:none}
 .rt thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .rt,.rt tbody{display:block}
 .rt tr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:14px 0;border-bottom:1px solid var(--line)}
@@ -397,7 +409,7 @@ tbody tr.flash{animation-duration:2.4s}}
 .rt td.em{flex:1 0 100%;margin-top:-4px;font-size:13px}
 .rt td[data-label]{font-size:13px}
 .rt td[data-label]::before{content:attr(data-label) " ";color:var(--muted)}
-.rt td.bk{flex:1 0 100%;font-size:12.5px;margin-top:-4px}
+.rt td.bk{flex:1 0 100%;width:auto;max-width:none;font-size:12.5px;margin-top:-4px}
 .rt td.bk:empty,.rt td.bk.more{display:none}
 .rt td.st.ok{display:none}
 .rt .pill .it{display:inline}}
@@ -864,7 +876,9 @@ JS = r"""
   // ── tables (the table view of every chart) ────────────────────────────────────
   function bookingCell(p) {
     if (!p.d) return h("td", {"class": "bk more", text: "–"});
-    return h("td", {"class": "bk"}, [p.b, p.m ? h("span", {"class": "more", text: " +" + p.m + " more"}) : null]);
+    var more = p.m ? " +" + p.m + " more" : "";
+    return h("td", {"class": "bk", title: p.b + more}, [h("span", {"class": "bkx"},
+      [p.b, more ? h("span", {"class": "more", text: more}) : null])]);
   }
   // Neil, 2026-10-24: in the tables No document reads red like Missing (the chart keeps Sand to tell them apart).
   var TABLE_TONE = {nodoc: "#c62f3f"};
@@ -895,7 +909,7 @@ JS = r"""
       if (withItems) p.st.forEach(function (code, i) { cells.push(stateCell(code, D.items[i])); });
       body.appendChild(h("tr", {id: "p-" + p.i}, cells));
     });
-    box.appendChild(h("div", {"class": "scroll"}, [h("table", {"class": "rt"}, [h("thead", null, [h("tr", null, head)]), body])]));
+    box.appendChild(h("div", {"class": "scroll tp"}, [h("table", {"class": "rt"}, [h("thead", null, [h("tr", null, head)]), body])]));
   }
   function byDayThenName(a, b) {
     return (!a.d - !b.d) || (a.d && b.d ? a.d.localeCompare(b.d) : 0) || a.n.localeCompare(b.n);
@@ -944,7 +958,7 @@ JS = r"""
         stateCell(p.ind, "Site induction"),
         h("td", {"class": "when", "data-label": p.d ? "Next booking" : null, text: fmtDay(p.d)})]));
     });
-    box.appendChild(h("div", {"class": "scroll"}, [h("table", {"class": "rt"}, [h("thead", null, [h("tr", null, head)]), body])]));
+    box.appendChild(h("div", {"class": "scroll tp"}, [h("table", {"class": "rt"}, [h("thead", null, [h("tr", null, head)]), body])]));
   }
 
   // ── Excel download of the not-cleared table (ExcelJS, fetched on first click) ──
