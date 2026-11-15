@@ -1,4 +1,4 @@
-# Dashboard redesign: NMG style guide, frosted glass (2026-11-16)
+﻿# Dashboard redesign: NMG style guide, frosted glass (2026-11-16)
 
 Neil's brief: use the NMG style guide (A9799 stylesheet), keep the frosted-glass theme, and make the dashboard
 look high-end, modern and professional, befitting a top-tier mining company.
@@ -49,7 +49,7 @@ The Wix HTML embed on /nmgmobs is a fixed 1237 x 4764 px frame. The old design w
 cut of this one was 5955 px, so its bottom scrolled inside the frame (scroll within scroll). Fixed by: rows at
 8 px padding (about 40 px rows), 60 px between sections, and long lists (chase, cleared, no work role, on site)
 scrolling inside their card under a sticky header, capped at 620 px, the Power BI table pattern. The page is now
-4508 px at 1237 px wide and stays about that height as the lists grow; only the employer-share chart still
+4508 px at 1237 px wide (4621 px in the 980 px frame Wix shows on phones) and stays about that height as the lists grow; only the employer-share chart still
 grows with the number of employers (about 32 px each). At that width the Booking column takes what is left and
 truncates, with the full text on hover.
 

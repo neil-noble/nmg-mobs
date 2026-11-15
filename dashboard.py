@@ -384,7 +384,10 @@ tbody tr.flash{animation-duration:2.4s}}
 @media (max-width:1180px){.hero-grid{grid-template-columns:1fr;grid-template-areas:"lead" "figs" "man";gap:32px}
 .lead{flex-direction:row;flex-wrap:wrap;align-items:flex-end;gap:4px 24px}
 .lead-n{font-size:112px}.lead-l,.lead-s,.jump{margin-top:0}.lead-txt{display:flex;flex-direction:column;gap:4px;padding-bottom:6px}
-.manifest{padding-top:0}.group>.v{grid-column:1/-1}}
+.manifest{padding-top:0}}
+/* the two gap charts stay side by side down to 900px: on a phone the Wix page shows its desktop layout, so the
+embed is a 980px frame of fixed height, and stacking them would push the page past it */
+@media (max-width:900px){.group>.v{grid-column:1/-1}}
 @media (min-width:1181px){.lead-txt{display:contents}}
 @media (max-width:820px){
 .canvas{padding:0 16px}.masthead{padding:32px 0 22px}h1{font-size:38px}.stamp{padding-bottom:0}
