@@ -60,6 +60,16 @@ architecture:
     % of each employer's BOOKED people (in the window) not cleared, red fill on a 100% rail, employers with 0 not
     cleared folded into a note (Neil 2026-10-24; denominator = booked, not all PeopleTray profiles - my call). Python decides every fact; the JS only counts/filters/draws;
     names go in as JSON with '<' escaped and are inserted with textContent.
+  site_without_induction: >
+    (Neil, 2026-11-15) dashboard section 'On site without a site induction', placed straight after Where things stand
+    (most urgent). On site now = room night tonight; been to site = any past room night (any camp/hotel) or past
+    non-cancelled, non-no-show flight arriving Meekathara (PeopleTray spelling), since HISTORY_START 2025-06-01 (start
+    of PeopleTray booking data). Induction not held = Crown Prince Project Site Induction state != ok (read from rows
+    even for no-work-role people; absent = Not on role). Same employer exclusions (they hid 44 people on 2026-11-15:
+    7 NMG Ltd not cleared, 37 Meeka Metals no role). Bookings slicer does not apply to it. Build now pulls
+    flights/rooms HISTORY_START..+365 (~3.5 min build).
+  placeholders: PeopleTray placeholder profiles (first name External / Dummy, e.g. hotel slots 'External BOOKING-FIVE',
+    'Dummy ACCOUNT 01') are ignored everywhere incl. their bookings (config.PLACEHOLDER_FIRST_NAMES, 2026-11-15)
   design_2026_11_15: >
     Neil asked for elevated hierarchy + frosted glass. Groups in order of work: Where things stand (hero not-cleared
     count + tiles + donut) > Who to chase (not-cleared table, primary) > Where the gaps are > Who is arriving >

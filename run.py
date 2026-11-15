@@ -13,7 +13,7 @@ import os
 import smtplib
 import sys
 import urllib.request
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from email.message import EmailMessage
 from email.utils import formataddr
 from pathlib import Path
@@ -36,8 +36,10 @@ def cmd_build(args):
     horizon = today + timedelta(days=C.HORIZON_DAYS - 1)
     people = build_people(peopletray.fetch_compliance())
     # One pull out to the horizon serves both: the email reads its 14 days, the dashboard all of it.
-    flights = peopletray.fetch_flight_bookings(today, horizon)
-    rooms = peopletray.fetch_room_bookings(today, horizon)
+    # From the start of PeopleTray's history: past trips show who has been on site.
+    history_start = date.fromisoformat(C.HISTORY_START)
+    flights = peopletray.fetch_flight_bookings(history_start, horizon)
+    rooms = peopletray.fetch_room_bookings(history_start, horizon)
     report = assess(people, flights, rooms, today)
     workforce = assess_all(people, flights, rooms, today)
     out = Path(args.out)
@@ -54,6 +56,9 @@ def cmd_build(args):
     print(f"dashboard: {len(workforce.workers)} workers (booked to {horizon} {booked}, no booking "
           f"{len(workforce.workers) - booked}), unmatched {len(workforce.unmatched)}, "
           f"excluded by employer {workforce.excluded}")
+    uninducted = workforce.uninducted_on_site()
+    print(f"no site induction: on site now {sum(w.on_site for w in uninducted)}, "
+          f"been to site {sum(not w.on_site for w in uninducted)}")
     print("missing by item: " + ", ".join(f"{k} {v}" for k, v in report.gap_counts().items()))
 
 

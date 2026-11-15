@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from html import escape
 
 import config as C
+from model import induction_state
 from render import fmt_day
 
 #: model state -> the short code the page uses
@@ -36,9 +37,13 @@ def data(workforce):
             row["st"] = [STATE_CODE[states[i]] for i in C.ITEMS]
         else:
             row["st"] = None
+        row["ls"] = w.last_on_site.isoformat() if w.last_on_site else None
+        row["os"] = w.on_site
+        row["ind"] = STATE_CODE[induction_state(p)]
         people.append(row)
     for u in wf.unmatched:
-        row = {"n": u.name, "e": u.employer or "(no employer)", "s": "u", "st": None}
+        row = {"n": u.name, "e": u.employer or "(no employer)", "s": "u", "st": None, "ls": None, "os": False,
+               "ind": None}
         row.update(booking(u.bookings))
         people.append(row)
     days = [(wf.today + timedelta(days=i)).isoformat() for i in range((wf.end - wf.today).days + 1)]
@@ -117,6 +122,13 @@ header .stamp{margin:0;font-size:12px;color:#E2C77E;font-weight:600;font-variant
 .empty{color:var(--muted);font-style:italic;margin:6px 0}
 /* the action list carries the page: stronger glass, navy edge */
 .v.primary{background:var(--glass-strong);border-left:4px solid var(--n);padding-left:18px}
+/* on site without induction: the most urgent list, so it carries the strongest edge */
+.v.urgent{background:var(--glass-strong);border-left:4px solid #b3261e;padding-left:18px}
+.where{display:inline-flex;align-items:center;gap:5px;padding:1px 9px 1px 7px;border-radius:9px;font-size:11.5px;
+font-weight:700;white-space:nowrap}
+.where i{width:8px;height:8px;border-radius:50%}
+.where.now{background:#b3261e;color:#fff}.where.now i{background:#fff}
+.where.past{background:rgba(8,48,69,.08);color:var(--navy)}.where.past i{background:var(--navy)}
 /* slicers: a frosted bar that stays in reach while scrolling */
 .slicers{position:sticky;top:8px;z-index:5;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:end;
 padding:10px 14px;border-radius:var(--r1)}
@@ -258,6 +270,14 @@ BODY = """
   <div class="kpis" id="kpis"></div>
   <section class="v glass status-donut"><h3>Mobilisation status</h3><p class="sub">Every worker in the selection</p>
     <div id="donut"></div></section>
+</section>
+
+<section class="group" aria-labelledby="g-site">
+  <div class="gh"><h2 id="g-site">On site without a site induction</h2><p>Has a room on site tonight, or has stayed on site
+    or flown into Meekatharra since June 2025, without a held Crown Prince Project Site Induction</p></div>
+  <section class="v glass urgent top"><div class="vhead"><div><h3 id="h-s">On site without a site induction</h3>
+    <p class="sub">On site now first, then most recently on site. The Bookings filter does not apply here.</p></div></div>
+    <div id="tbl-s"></div></section>
 </section>
 
 <section class="group" aria-labelledby="g-chase">
@@ -677,6 +697,32 @@ JS = r"""
     table("tbl-c", c, true, "Nobody in this selection is cleared yet.");
   }
 
+  // ── on site (now or before) without a held site induction ────────────────────
+  function siteTable() {
+    var q = F.q.trim().toLowerCase();
+    var list = D.people.filter(function (p) {
+      return p.ls && p.ind && p.ind !== "ok" && (!F.emp || p.e === F.emp) && (!q || p.n.toLowerCase().indexOf(q) >= 0);
+    }).sort(function (a, b) {
+      return (b.os - a.os) || b.ls.localeCompare(a.ls) || a.n.localeCompare(b.n);
+    });
+    var now = list.filter(function (p) { return p.os; }).length;
+    document.getElementById("h-s").textContent = plural(list.length, "person", "people") +
+      (list.length ? " · " + now + " on site now" : "");
+    var box = document.getElementById("tbl-s");
+    box.replaceChildren();
+    if (!list.length) { box.appendChild(h("p", {"class": "empty", text: "Nobody in this selection has been on site without a site induction."})); return; }
+    var head = ["Name", "Employer", "On site", "Last on site", "Site induction", "Next booking"].map(function (t) {
+      return h("th", {"class": t === "Site induction" ? "st" : "", text: t}); });
+    var body = h("tbody");
+    list.forEach(function (p) {
+      body.appendChild(h("tr", null, [h("td", {text: p.n}), h("td", {text: p.e}),
+        h("td", null, [h("span", {"class": "where " + (p.os ? "now" : "past")}, [h("i"), p.os ? "On site now" : "Been to site"])]),
+        h("td", {"class": "when", text: fmtDay(p.ls) + (p.ls.slice(0, 4) !== D.days[0].slice(0, 4) ? " " + p.ls.slice(0, 4) : "")}), stateCell(p.ind),
+        h("td", {"class": "when", text: fmtDay(p.d)})]));
+    });
+    box.appendChild(h("div", {"class": "scroll"}, [h("table", null, [h("thead", null, [h("tr", null, head)]), body])]));
+  }
+
   // ── Excel download of the not-cleared table (ExcelJS, fetched on first click) ──
   var EXCELJS = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js";
   var EXCELJS_SRI = "sha512-dlPw+ytv/6JyepmelABrgeYgHI0O+frEwgfnPdXDTOIZz+eDgfW07QXG02/O8COfivBdGNINy+Vex+lYmJ5rxw==";
@@ -746,7 +792,7 @@ JS = r"""
     var R = rows(false);
     chip.textContent = active ? "Showing " + plural(R.length, "person", "people") + " of " + D.people.length : "";
     saveFilters();
-    kpis(R); donut(R); employers(rows(true)); items(R); days(R); tables(R); employerShare(rows(true));
+    kpis(R); donut(R); siteTable(); employers(rows(true)); items(R); days(R); tables(R); employerShare(rows(true));
   }
   render();
 })();

@@ -30,6 +30,10 @@ class Person:
         return f"{self.last.upper()}, {self.first}".strip(", ")
 
     @property
+    def is_placeholder(self):
+        return self.first.casefold() in {n.casefold() for n in C.PLACEHOLDER_FIRST_NAMES}
+
+    @property
     def is_stw(self):
         return any(r.startswith(C.STW_ROLE_PREFIX) for r in self.roles)
 
@@ -165,15 +169,29 @@ def _live_flight(row):
     return not row.get("cancel") and (row.get("bookingStatus") or "") != "Cancelled"
 
 
+def _flight_matcher(people):
+    """Flight bookings carry no employeeId: match the work email, else a unique first + last name."""
+    by_email = {p.email: eid for eid, p in people.items() if p.email}
+    by_name = defaultdict(list)
+    for eid, p in people.items():
+        by_name[(p.first.lower(), p.last.lower())].append(eid)
+
+    def match(row):
+        eid = by_email.get((row.get("workEmail") or "").strip().lower())
+        if eid is None:
+            key = ((row.get("firstName") or "").strip().lower(), (row.get("lastName") or "").strip().lower())
+            candidates = by_name.get(key, [])
+            eid = candidates[0] if len(candidates) == 1 else None
+        return eid
+    return match
+
+
 def _match(people, flights, rooms, start: date, end: date, split_stays=False):
     """Bookings from start..end per employeeId, plus bookings matched to no profile.
 
     Rooms: one booking per person (first night + night count), or with split_stays one per run of
     consecutive nights, so a later return trip reads as its own booking."""
-    by_email = {p.email: eid for eid, p in people.items() if p.email}
-    by_name = defaultdict(list)
-    for eid, p in people.items():
-        by_name[(p.first.lower(), p.last.lower())].append(eid)
+    match = _flight_matcher(people)
 
     bookings = defaultdict(set)        # employeeId -> {Booking}
     unmatched = {}                     # name -> Unmatched
@@ -182,11 +200,9 @@ def _match(people, flights, rooms, start: date, end: date, split_stays=False):
         if not (start <= day <= end and _live_flight(row)):
             continue
         booking = Booking(day, "Flight", _flight_detail(row))
-        eid = by_email.get((row.get("workEmail") or "").strip().lower())
-        if eid is None:
-            key = ((row.get("firstName") or "").strip().lower(), (row.get("lastName") or "").strip().lower())
-            candidates = by_name.get(key, [])
-            eid = candidates[0] if len(candidates) == 1 else None
+        eid = match(row)
+        if eid is not None and people[eid].is_placeholder:
+            continue
         if eid is None:
             name = f"{(row.get('lastName') or '').strip().upper()}, {(row.get('firstName') or '').strip()}"
             u = unmatched.setdefault(name, Unmatched(name, (row.get("employer") or "").strip(), []))
@@ -200,6 +216,8 @@ def _match(people, flights, rooms, start: date, end: date, split_stays=False):
         if start <= day <= end:
             rooms_by_person[str(row.get("employeeId") or "").strip()].append((day, row))
     for eid, nights in rooms_by_person.items():
+        if eid in people and people[eid].is_placeholder:
+            continue
         if eid not in people:
             row = nights[0][1]
             name = f"{(row.get('personLastName') or '').strip().upper()}, {(row.get('personFirstName') or '').strip()}"
@@ -257,11 +275,43 @@ def assess(people, flights, rooms, today: date, days=C.LOOKAHEAD_DAYS) -> Report
                   sorted(unmatched.values(), key=lambda u: (u.bookings[0].day, u.name)), excluded)
 
 
+def site_history(people, flights, rooms, today: date):
+    """employeeId -> (last day on site up to today, on site tonight). A room night or a flight into site counts."""
+    match = _flight_matcher(people)
+    last, tonight = {}, set()
+    for row in rooms:
+        day = _day(row["dateOfBooking"])
+        eid = str(row.get("employeeId") or "").strip()
+        if day > today or eid not in people or people[eid].is_placeholder:
+            continue
+        if day == today:
+            tonight.add(eid)
+        last[eid] = max(last.get(eid, day), day)
+    for row in flights:
+        day = _day(row["flightDate"])
+        if (day > today or not _live_flight(row) or row.get("noShow")
+                or (row.get("arrivalPort") or "").strip().lower() != C.SITE_PORT.lower()):
+            continue
+        eid = match(row)
+        if eid is not None and not people[eid].is_placeholder:
+            last[eid] = max(last.get(eid, day), day)
+    return {eid: (day, eid in tonight) for eid, day in last.items()}
+
+
+def induction_state(person):
+    """The site induction's state, read even for people with no work role (their row may still exist)."""
+    if person.roles:
+        return person.item_states()[C.INDUCTION]
+    return person.sources.get(C.INDUCTION_SOURCE, C.NOT_ON_ROLE)
+
+
 @dataclass
 class Worker:
     person: Person
     status: str        # "c" cleared, "n" not cleared, "r" no work role
     bookings: list     # upcoming bookings, earliest first; empty = no booking
+    last_on_site: date = None   # latest room night or flight into site up to today; None = never
+    on_site: bool = False       # has a room tonight
 
     @property
     def next(self):
@@ -281,19 +331,30 @@ class Workforce:
     def in_window(self, worker):
         return worker.next is not None and worker.next.day <= self.end
 
+    def uninducted_on_site(self):
+        """Workers on site now, or ever on site, without a held site induction: on site now first, then latest."""
+        found = [w for w in self.workers if w.last_on_site and induction_state(w.person) != C.OK]
+        return sorted(found, key=lambda w: (not w.on_site, -w.last_on_site.toordinal(),
+                                            w.person.last.lower(), w.person.first.lower()))
+
 
 def assess_all(people, flights, rooms, today: date, horizon_days=C.HORIZON_DAYS,
                days=C.LOOKAHEAD_DAYS) -> Workforce:
     end = today + timedelta(days=days - 1)
     horizon = today + timedelta(days=horizon_days - 1)
     bookings, unmatched = _match(people, flights, rooms, today, horizon, split_stays=True)
+    history = site_history(people, flights, rooms, today)
     workers, excluded = [], 0
     for eid, person in people.items():
+        if person.is_placeholder:
+            continue
         status = _status(person)
         if _excluded(person, status):
             excluded += 1
             continue
-        workers.append(Worker(person, status, sorted(bookings.get(eid, ()), key=lambda b: (b.day, b.kind))))
+        last, tonight = history.get(eid, (None, False))
+        workers.append(Worker(person, status, sorted(bookings.get(eid, ()), key=lambda b: (b.day, b.kind)),
+                              last, tonight))
     workers.sort(key=lambda w: (w.next is None, w.next.day if w.next else today,
                                 w.person.last.lower(), w.person.first.lower()))
     return Workforce(today, end, horizon, workers,

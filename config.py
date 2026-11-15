@@ -11,6 +11,14 @@ ROOMS_PATH = "/api/v2/powerbi/roombookings"
 
 #: Bookings from today up to this many days ahead are checked (Neil, 2026-10-24).
 LOOKAHEAD_DAYS = 14
+#: Site history (who is or has been on site) is read from this day; PeopleTray's bookings start June 2025.
+HISTORY_START = "2025-06-01"
+#: A past flight arriving here counts as a trip to site, as does any room night (Neil, 2026-11-15).
+SITE_PORT = "Meekathara"   # PeopleTray's spelling
+INDUCTION_SOURCE = "Crown Prince Project Site Induction"
+#: PeopleTray placeholder profiles (hotel booking slots "External BOOKING-FIVE", "Dummy ACCOUNT 01") are not
+#: people: their bookings and rows are ignored everywhere (2026-11-15). Matched on the stripped first name.
+PLACEHOLDER_FIRST_NAMES = ("External", "Dummy")
 #: The dashboard lists every worker with their next booking up to this many days ahead (Neil, 2026-11-15).
 HORIZON_DAYS = 365
 

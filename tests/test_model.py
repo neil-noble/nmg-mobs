@@ -183,3 +183,34 @@ def test_separate_stays_are_separate_bookings():
                                                         (date(2026, 11, 20), "Westgold Camp, 2 night(s)")]
     # the email's window view still reads one stay per person
     assert len(assess(people, [], rooms, TODAY).cleared[0].bookings) == 1
+
+
+def test_on_site_without_induction():
+    rows = (full_set("1")                                                       # inducted: never listed
+            + full_set("2", first="Bo", last="NOW", email="2@x.au")
+            + full_set("3", first="Cy", last="PAST", email="3@x.au")
+            + full_set("4", first="Di", last="NEVER", email="4@x.au")
+            + [comp("5", "Other", "Does not expire", role="", first="Ed", last="NOROLE", email="5@x.au")])
+    for i, r in enumerate(rows):
+        if r.get("competencyName") and r["employeeId"] in ("2", "3", "4"):
+            rows[i] = induction(r["employeeId"], "WR Requirement", False, first=r["firstName"], last=r["lastName"],
+                                email=r["workEmail"])
+    rooms = [room("1", "2026-10-24"), room("2", "2026-10-23"), room("2", "2026-10-24"), room("5", "2026-09-01"),
+             room("4", "2026-10-30")]                                           # future only: not been to site
+    flights = [flight("Cy", "PAST", "2026-08-01", "3@x.au") | {"arrivalPort": "Meekathara"},
+               flight("Cy", "PAST", "2026-09-01", "3@x.au") | {"arrivalPort": "Perth"}]  # flying home is not a trip in
+    wf = assess_all(build_people(rows), flights, rooms, TODAY)
+    found = [(w.person.last, w.on_site, w.last_on_site) for w in wf.uninducted_on_site()]
+    assert found == [("NOW", True, date(2026, 10, 24)), ("NOROLE", False, date(2026, 9, 1)),
+                     ("PAST", False, date(2026, 8, 1))]
+
+
+def test_placeholder_profiles_are_ignored():
+    rows = full_set("1") + [comp("9", "Other", "Does not expire", role="", first="External", last="BOOKING-FIVE",
+                                 email="", employer="Commercial Hotel")]
+    rooms = [room("9", "2026-10-24"), room("1", "2026-10-24")]
+    people = build_people(rows)
+    r = assess(people, [], rooms, TODAY)
+    assert r.booked_count == 1 and r.unmatched == []
+    wf = assess_all(people, [], rooms, TODAY)
+    assert [w.person.last for w in wf.workers] == ["SMITH"] and wf.unmatched == []
