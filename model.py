@@ -205,6 +205,8 @@ def _match(people, flights, rooms, start: date, end: date, split_stays=False):
             continue
         if eid is None:
             name = f"{(row.get('lastName') or '').strip().upper()}, {(row.get('firstName') or '').strip()}"
+            if _employer_out(row.get("employer")):
+                continue
             u = unmatched.setdefault(name, Unmatched(name, (row.get("employer") or "").strip(), []))
             u.bookings.append(booking)
             continue
@@ -220,6 +222,8 @@ def _match(people, flights, rooms, start: date, end: date, split_stays=False):
             continue
         if eid not in people:
             row = nights[0][1]
+            if _employer_out(row.get("employer")):
+                continue
             name = f"{(row.get('personLastName') or '').strip().upper()}, {(row.get('personFirstName') or '').strip()}"
             u = unmatched.setdefault(name, Unmatched(name, (row.get("employer") or "").strip(), []))
             u.bookings.extend(Booking(d, "Room", (r.get("roomCamp") or "").strip()) for d, r in nights)
@@ -248,8 +252,14 @@ def _status(person):
     return "n" if person.gaps() else "c"
 
 
+def _employer_out(employer):
+    return (employer or "").strip().casefold() in {e.casefold() for e in C.ALL_EXCLUDED_EMPLOYERS}
+
+
 def _excluded(person, status):
     employer = person.employer.strip().casefold()
+    if _employer_out(employer):
+        return True
     if status == "r":
         return employer in {e.casefold() for e in C.NO_ROLE_EXCLUDED_EMPLOYERS}
     if status == "n":

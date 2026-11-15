@@ -131,23 +131,22 @@ def test_by_employer_counts():
     assert assess(build_people(rows), flights, [], TODAY).by_employer() == [("A", 1, 1), ("B", 1, 0)]
 
 
-def test_excluded_employers_leave_only_their_section():
-    nmg = dict(employer="new murchison gold ltd")                      # case does not matter
-    rows = (full_set("1", **nmg)                                        # NMG, cleared: still shown
-            + full_set("2", first="Bo", last="GAP", email="2@x.au", **nmg)
-            + [comp("3", "Other", "Does not expire", role="", first="Cy", last="MEEKA", email="3@x.au",
-                    employer="Meeka Metals"),
+def test_excluded_employers():
+    # NMG Ltd and Meeka Metals: out entirely, whatever their status (Neil, 2026-11-15). Case does not matter.
+    nmg, meeka, wg = dict(employer="new murchison gold ltd"), dict(employer="Meeka Metals"), dict(employer="WestGold")
+    rows = (full_set("1", **nmg)                                                        # NMG cleared: out
+            + full_set("2", first="Bo", last="MEEKA", email="2@x.au", **meeka)          # Meeka cleared: out
+            + full_set("6", first="Fi", last="OTHER", email="6@x.au", employer="Drill West")
+            + [comp("3", "Other", "Does not expire", role="", first="Cy", last="WG", email="3@x.au", **wg),
                comp("4", "Other", "Does not expire", role="", first="Di", last="NMGNOROLE", email="4@x.au", **nmg)])
-    rows[6] = comp("2", "National Police Clearance", "No document added", first="Bo", last="GAP",
-                   email="2@x.au", **nmg)
-    flights = [flight("Ann", "SMITH", "2026-10-26", "1@x.au"), flight("Bo", "GAP", "2026-10-26", "2@x.au")]
+    flights = [flight("Ann", "SMITH", "2026-10-26", "1@x.au"), flight("Bo", "MEEKA", "2026-10-26", "2@x.au"),
+               flight("Fi", "OTHER", "2026-10-26", "6@x.au"),
+               flight("Gus", "NOPROFILE", "2026-10-26", "g@x.au") | {"employer": "Meeka Metals"}]   # unmatched: out
     r = assess(build_people(rows), flights, [room("3", "2026-10-25"), room("4", "2026-10-25")], TODAY)
-    assert [b.person.last for b in r.cleared] == ["SMITH"]
-    assert r.not_cleared == []                                          # NMG not-cleared left out
-    assert [b.person.last for b in r.no_role] == ["NMGNOROLE"]          # Meeka left out, NMG kept
-    assert sorted(b.person.last for b in r.excluded) == ["GAP", "MEEKA"]
-    assert r.booked_count == 2
-
+    assert [b.person.last for b in r.cleared] == ["OTHER"]
+    assert r.no_role == [] and r.unmatched == []                                    # WestGold no-role still out
+    assert sorted(b.person.last for b in r.excluded) == ["MEEKA", "NMGNOROLE", "SMITH", "WG"]
+    assert r.booked_count == 1
 
 def test_all_workers_listed_with_next_booking():
     rows = (full_set("1") + full_set("2", first="Bo", last="LATER", email="2@x.au")
@@ -165,15 +164,12 @@ def test_all_workers_listed_with_next_booking():
 
 def test_all_workers_keep_the_employer_exclusions():
     nmg = dict(employer="New Murchison Gold Ltd")
-    rows = (full_set("1", **nmg) + full_set("2", first="Bo", last="GAP", email="2@x.au", **nmg)
+    rows = (full_set("1", **nmg) + full_set("2", first="Bo", last="KEEP", email="2@x.au", employer="Drill West")
             + [comp("3", "Other", "Does not expire", role="", first="Cy", last="WG", email="3@x.au",
                     employer="westgold")])
-    rows[6] = comp("2", "National Police Clearance", "No document added", first="Bo", last="GAP",
-                   email="2@x.au", **nmg)
     wf = assess_all(build_people(rows), [], [], TODAY)
-    assert [w.person.last for w in wf.workers] == ["SMITH"]
+    assert [w.person.last for w in wf.workers] == ["KEEP"]
     assert wf.excluded == 2
-
 
 def test_separate_stays_are_separate_bookings():
     people = build_people(full_set("1"))

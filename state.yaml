@@ -36,6 +36,9 @@ rules:   # Neil, 2026-10-24
     not on work role: the person's work roles carry no row for the item -> a gap (fix the work role)
   multi_role: one row per work role per item; best state wins
   no_work_role: people whose rows all have a blank workRole -> own section "cannot be checked" (Neil chose this over flagging)
+  employer_exclusions_2026_11_15: (Neil) ALL New Murchison Gold Ltd and Meeka Metals people are left out of the dashboard AND the
+    email whatever their status (config.ALL_EXCLUDED_EMPLOYERS), incl. unmatched bookings carrying those employers. Supersedes
+    the section-only rules below for those two; WestGold no-role exclusion still applies.
   employer_exclusions: (Neil, 2026-10-24) not-cleared people from New Murchison Gold Ltd, and no-work-role people from
     Meeka Metals / WestGold, are left out entirely (not shown, not counted; config.*_EXCLUDED_EMPLOYERS, case-insensitive).
     Cleared NMG people still count. Build log prints 'excluded by employer N' (49 on 2026-10-24)
