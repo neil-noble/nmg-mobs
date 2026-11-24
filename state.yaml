@@ -132,3 +132,5 @@ incidents:
   - '2026-11-04 ~10:00 UTC (18:00 AWST): "not updating" = GitHub-wide outage (Git Operations/Actions incident). 10:05 UTC cron-job.org dispatch got HTTP 500; manual re-runs failed at the push step with "Permission denied (publickey)" (deploy key + secret unchanged, OHS dashboard failing the same way). No code/config fault. Diagnose: cron-job.org history (key in PeopleTray DAS/reference/Cronjob_api_key.txt), gh run list, githubstatus.com'
 next:
   - raise with PeopleTray whether bookings can be hard-gated on compliance natively
+pages_artifact_race_2026_11_24: >
+  nmg-mobs-site Publish to Pages failed 18x 2026-11-21..24 ("Found 0 artifact(s)" right after upload) -> run-failed emails. Fix 411ec63 in nmg-mobs-site pages.yml: sleep 10, deploy (continue-on-error), on failure sleep 20 + retry once. First run green.
